@@ -349,20 +349,21 @@ export async function generateReportPDF(report, data) {
     para('Nenhuma medição foi registrada neste laudo.', { justify: false });
   } else {
     // Tabela de resultados
-    const colX = [M, M + 12, W - M - 55, W - M - 25, W - M];
-    const colLabels = ['#', 'Descrição / Local', 'Valor Medido (Ω)', 'Limite (Ω)', 'Status'];
+    const colX = [M, M + 10, M + 95, M + 140, M + 165];
+    const colW = [10, 85, 45, 25, 27];
+    const colLabels = ['#', 'Descrição / Local', 'Valor (Ω)', 'Limite (Ω)', 'Status'];
 
     // Header da tabela
     doc.setFillColor(...COLOR_PRIMARY);
     doc.rect(M, y - 5, W - 2 * M, 9, 'F');
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(255, 255, 255);
-    doc.text(colLabels[0], colX[0] + 2, y + 1);
+    doc.text(colLabels[0], colX[0] + colW[0] / 2, y + 1, { align: 'center' });
     doc.text(colLabels[1], colX[1] + 2, y + 1);
-    doc.text(colLabels[2], colX[2] + 2, y + 1, { align: 'center' });
-    doc.text(colLabels[3], colX[3] + 2, y + 1, { align: 'center' });
-    doc.text(colLabels[4], colX[4] - 2, y + 1, { align: 'right' });
+    doc.text(colLabels[2], colX[2] + colW[2] / 2, y + 1, { align: 'center' });
+    doc.text(colLabels[3], colX[3] + colW[3] / 2, y + 1, { align: 'center' });
+    doc.text(colLabels[4], colX[4] + colW[4] / 2, y + 1, { align: 'center' });
     doc.setTextColor(0, 0, 0);
     y += 9;
 
@@ -381,11 +382,11 @@ export async function generateReportPDF(report, data) {
       doc.setFontSize(9.5);
       doc.setFont(undefined, 'bold');
       doc.setTextColor(...COLOR_PRIMARY);
-      doc.text(`${i + 1}`, colX[0] + 2, y + 1);
+      doc.text(`${i + 1}`, colX[0] + colW[0] / 2, y + 1, { align: 'center' });
 
       doc.setFont(undefined, 'normal');
       doc.setTextColor(0, 0, 0);
-      const descLines = doc.splitTextToSize(m.descricao || '-', colX[2] - colX[1] - 6);
+      const descLines = doc.splitTextToSize(m.descricao || '-', colW[1] - 4);
       const actualRowH = Math.max(rowH, 5.5 * descLines.length + 3);
       if (i % 2 === 0) {
         doc.setFillColor(248, 250, 252);
@@ -394,13 +395,14 @@ export async function generateReportPDF(report, data) {
       doc.text(descLines, colX[1] + 2, y + 1);
 
       doc.setFont(undefined, 'bold');
-      doc.text(m.valor_medido != null ? `${m.valor_medido}` : '-', colX[2] + 2, y + 1, { align: 'center' });
+      doc.text(m.valor_medido != null ? `${m.valor_medido}` : '-', colX[2] + colW[2] / 2, y + 1, { align: 'center' });
       doc.setFont(undefined, 'normal');
-      doc.text(`${lim}`, colX[3] + 2, y + 1, { align: 'center' });
+      doc.text(`${lim}`, colX[3] + colW[3] / 2, y + 1, { align: 'center' });
 
       doc.setFont(undefined, 'bold');
       doc.setTextColor(...(approved ? COLOR_GREEN : COLOR_RED));
-      doc.text(approved ? 'APROVADO' : 'REPROVADO', colX[4] - 2, y + 1, { align: 'right' });
+      doc.setFontSize(8.5);
+      doc.text(approved ? 'APROVADO' : 'REPROVADO', colX[4] + colW[4] / 2, y + 1, { align: 'center' });
       doc.setTextColor(0, 0, 0);
 
       y += actualRowH;
@@ -409,7 +411,13 @@ export async function generateReportPDF(report, data) {
     // Borda da tabela
     doc.setDrawColor(...COLOR_ACCENT);
     doc.setLineWidth(0.3);
-    doc.rect(M, y - 5 - (measurements.length * 8 + 9) + 9, W - 2 * M, y - (y - 5 - (measurements.length * 8 + 9) + 9));
+    const tableTop = y - 9 - (measurements.length * 8);
+    doc.rect(M, tableTop, W - 2 * M, y - 5 - tableTop);
+    // Linhas verticais separadoras
+    doc.setLineWidth(0.2);
+    for (let c = 1; c < colX.length; c++) {
+      doc.line(colX[c], tableTop, colX[c], y - 5);
+    }
 
     y += 4;
 
