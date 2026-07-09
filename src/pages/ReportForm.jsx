@@ -53,6 +53,8 @@ export default function ReportForm() {
   const [engineerForm, setEngineerForm] = useState({ nome: '', cpf: '', crea_sc: '' });
   const [showElectricianDialog, setShowElectricianDialog] = useState(false);
   const [electricianForm, setElectricianForm] = useState({ nome: '', cpf: '', registro_profissional: '' });
+  const [showInstrumentDialog, setShowInstrumentDialog] = useState(false);
+  const [instrumentForm, setInstrumentForm] = useState({ marca_modelo: '', numero_serie: '', data_calibracao: '', especificacoes: '' });
 
   const handleClientCnpjLookup = async () => {
     const cnpj = (clientForm.cnpj || '').replace(/\D/g, '');
@@ -215,7 +217,12 @@ export default function ReportForm() {
             </Select>
           </div>
           <div>
-            <Label>Instrumento</Label>
+            <div className="flex items-center justify-between">
+              <Label>Instrumento</Label>
+              <Button type="button" variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => setShowInstrumentDialog(true)}>
+                <Plus className="h-3 w-3 mr-1" /> Novo
+              </Button>
+            </div>
             <Select value={form.instrumento_id || 'none'} onValueChange={v => set('instrumento_id', v === 'none' ? '' : v)}>
               <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
               <SelectContent>
@@ -361,6 +368,32 @@ export default function ReportForm() {
               setElectricianForm({ nome: '', cpf: '', registro_profissional: '' });
               setShowElectricianDialog(false);
             }}>Salvar Eletricista</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showInstrumentDialog} onOpenChange={setShowInstrumentDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Cadastrar Novo Instrumento</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 gap-4 py-2">
+            <div><Label>Marca / Modelo *</Label><Input value={instrumentForm.marca_modelo} onChange={e => setInstrumentForm(s => ({ ...s, marca_modelo: e.target.value }))} /></div>
+            <div><Label>Número de Série</Label><Input value={instrumentForm.numero_serie} onChange={e => setInstrumentForm(s => ({ ...s, numero_serie: e.target.value }))} /></div>
+            <div><Label>Data de Calibração</Label><Input type="date" value={instrumentForm.data_calibracao} onChange={e => setInstrumentForm(s => ({ ...s, data_calibracao: e.target.value }))} /></div>
+            <div><Label>Especificações</Label><Textarea value={instrumentForm.especificacoes} onChange={e => setInstrumentForm(s => ({ ...s, especificacoes: e.target.value }))} rows={3} /></div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowInstrumentDialog(false)}>Cancelar</Button>
+            <Button onClick={async () => {
+              if (!instrumentForm.marca_modelo) return;
+              if (!garantirConexao()) return;
+              const created = await base44.entities.Instrument.create(instrumentForm);
+              setInstruments(s => [...s, created]);
+              set('instrumento_id', created.id);
+              setInstrumentForm({ marca_modelo: '', numero_serie: '', data_calibracao: '', especificacoes: '' });
+              setShowInstrumentDialog(false);
+            }}>Salvar Instrumento</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
