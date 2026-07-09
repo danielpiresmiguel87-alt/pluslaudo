@@ -6,9 +6,22 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
     
-    const fullUser = await base44.entities.User.get(user.id);
-    return Response.json({ role: fullUser.role, full_name: fullUser.full_name, email: fullUser.email });
+    console.log('auth.me() returned:', JSON.stringify({ id: user.id, email: user.email, role: user.role, full_name: user.full_name }));
+    
+    let role = user.role;
+    if (!role && user.id) {
+      try {
+        const fullUser = await base44.entities.User.get(user.id);
+        console.log('User.get returned:', JSON.stringify({ role: fullUser.role }));
+        role = fullUser.role;
+      } catch (e) {
+        console.log('User.get failed:', e.message);
+      }
+    }
+    
+    return Response.json({ role, full_name: user.full_name, email: user.email, me_role: user.role });
   } catch (error) {
+    console.error('getUserRole error:', error.message);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });

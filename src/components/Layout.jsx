@@ -9,15 +9,12 @@ export default function Layout() {
   const { user } = useAuth();
   const [company, setCompany] = useState(null);
   const [open, setOpen] = useState(false);
-  const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
     base44.entities.Company.list().then(res => { if (res[0]) setCompany(res[0]); });
-    base44.functions.invoke('getUserRole', {})
-      .then(res => setUserRole(res.data.role))
-      .catch(() => {});
   }, []);
 
+  const userRole = user?.role;
   const isAdmin = userRole === 'admin';
   const canManage = userRole === 'admin' || userRole === 'coordenador';
   const navItems = [
@@ -44,6 +41,7 @@ export default function Layout() {
           <span className="text-xl font-bold">PISON MEGAWATT</span>
         )}
         <p className="text-xs text-muted-foreground mt-1">Gestão de Laudos</p>
+        <p className="text-xs text-red-500 mt-1">DEBUG: role={user?.role || 'null'} | email={user?.email || 'null'}</p>
       </div>
       <nav className="flex-1 p-3 space-y-1">
         {navItems.map(item => (
