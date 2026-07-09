@@ -364,19 +364,24 @@ export async function generateReportPDF(report, data) {
       }
     };
 
-    // Header da tabela
-    doc.setFillColor(...COLOR_PRIMARY);
-    doc.rect(M, y - 5, W - 2 * M, 9, 'F');
-    doc.setFontSize(9);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(255, 255, 255);
-    doc.text(colLabels[0], colX[0] + colW[0] / 2, y + 1, { align: 'center' });
-    doc.text(colLabels[1], colX[1] + 2, y + 1);
-    doc.text(colLabels[2], colX[2] + colW[2] / 2, y + 1, { align: 'center' });
-    doc.text(colLabels[3], colX[3] + colW[3] / 2, y + 1, { align: 'center' });
-    doc.text(colLabels[4], colX[4] + colW[4] / 2, y + 1, { align: 'center' });
-    doc.setTextColor(0, 0, 0);
-    y += 9;
+    // Função para desenhar o cabeçalho da tabela (reutilizada em quebras de página)
+    const drawTableHeader = () => {
+      doc.setFillColor(...COLOR_PRIMARY);
+      doc.rect(M, y - 5, W - 2 * M, 9, 'F');
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(255, 255, 255);
+      doc.text(colLabels[0], colX[0] + colW[0] / 2, y + 1, { align: 'center' });
+      doc.text(colLabels[1], colX[1] + 2, y + 1);
+      doc.text(colLabels[2], colX[2] + colW[2] / 2, y + 1, { align: 'center' });
+      doc.text(colLabels[3], colX[3] + colW[3] / 2, y + 1, { align: 'center' });
+      doc.text(colLabels[4], colX[4] + colW[4] / 2, y + 1, { align: 'center' });
+      doc.setTextColor(0, 0, 0);
+      y += 9;
+    };
+
+    // Header da tabela (primeira página)
+    drawTableHeader();
 
     let pageTop = y - 5;  // topo da tabela na página atual
     for (let i = 0; i < measurements.length; i++) {
@@ -388,26 +393,14 @@ export async function generateReportPDF(report, data) {
       const descLines = doc.splitTextToSize(m.descricao || '-', colW[1] - 4);
       const rowH = Math.max(8, 5.5 * descLines.length + 3);
 
-      // Se precisar de quebra de página, fecha a borda da página atual antes
+      // Se a linha não couber, fecha a borda da página atual e repete o cabeçalho na nova
       if (y + rowH > H - 20) {
         drawTableBorders(pageTop, y);
         drawFooter();
         doc.addPage();
         pageNum++;
         y = M;
-        // Repete o header da tabela na nova página
-        doc.setFillColor(...COLOR_PRIMARY);
-        doc.rect(M, y - 5, W - 2 * M, 9, 'F');
-        doc.setFontSize(9);
-        doc.setFont(undefined, 'bold');
-        doc.setTextColor(255, 255, 255);
-        doc.text(colLabels[0], colX[0] + colW[0] / 2, y + 1, { align: 'center' });
-        doc.text(colLabels[1], colX[1] + 2, y + 1);
-        doc.text(colLabels[2], colX[2] + colW[2] / 2, y + 1, { align: 'center' });
-        doc.text(colLabels[3], colX[3] + colW[3] / 2, y + 1, { align: 'center' });
-        doc.text(colLabels[4], colX[4] + colW[4] / 2, y + 1, { align: 'center' });
-        doc.setTextColor(0, 0, 0);
-        y += 9;
+        drawTableHeader();
         pageTop = y - 5;
       }
 
