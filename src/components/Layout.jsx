@@ -41,7 +41,7 @@ export default function Layout() {
           <span className="text-xl font-bold">PISON MEGAWATT</span>
         )}
         <p className="text-xs text-muted-foreground mt-1">Gestão de Laudos</p>
-        <p className="text-xs text-red-500 mt-1">DEBUG: role={user?.role || 'null'} | email={user?.email || 'null'}</p>
+        <p className="text-xs text-red-500 mt-1">DEBUG: role={user?.role || 'null'} | email={user?.email || 'null'} | keys={user ? Object.keys(user).join(',') : 'null'}</p>
       </div>
       <nav className="flex-1 p-3 space-y-1">
         {navItems.map(item => (
