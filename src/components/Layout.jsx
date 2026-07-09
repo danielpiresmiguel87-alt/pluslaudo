@@ -9,13 +9,24 @@ export default function Layout() {
   const { user } = useAuth();
   const [company, setCompany] = useState(null);
   const [open, setOpen] = useState(false);
+  const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
     base44.entities.Company.list().then(res => { if (res[0]) setCompany(res[0]); });
   }, []);
 
-  const isAdmin = user?.role === 'admin';
-  const canManage = user?.role === 'admin' || user?.role === 'coordenador';
+  useEffect(() => {
+    if (user?.role) {
+      setUserRole(user.role);
+    } else if (user?.id) {
+      base44.entities.User.get(user.id)
+        .then(u => setUserRole(u.role))
+        .catch(() => {});
+    }
+  }, [user]);
+
+  const isAdmin = userRole === 'admin';
+  const canManage = userRole === 'admin' || userRole === 'coordenador';
   const navItems = [
     { to: '/', label: 'Laudos', icon: FileText, end: true },
   ];
