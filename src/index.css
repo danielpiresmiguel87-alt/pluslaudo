@@ -92,13 +92,50 @@
 }
 
 @media print {
-  aside, header, button {
+  @page {
+    margin: 12mm;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  html, body {
+    background: #ffffff !important;
+  }
+
+  /* Esconde navegação e botões de ação */
+  aside,
+  header,
+  button,
+  .print\:hidden {
     display: none !important;
   }
+
+  /* Remove padding lateral do layout com sidebar */
   .lg\:pl-64 {
     padding-left: 0 !important;
   }
+
   main {
     padding: 0 !important;
+  }
+
+  /* Cards: mantém bordas e fundo na impressão */
+  [class*="rounded-xl"] {
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+
+  /* Evita quebra de página dentro de seções */
+  section,
+  [class*="rounded-xl"] > div {
+    break-inside: avoid;
+  }
+
+  /* Imagens não ultrapassam a página */
+  img {
+    max-width: 100% !important;
   }
 }
