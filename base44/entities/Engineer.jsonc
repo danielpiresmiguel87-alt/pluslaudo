@@ -1,0 +1,18 @@
+{
+  "name": "Engineer",
+  "type": "object",
+  "properties": {
+    "nome": {
+      "type": "string"
+    },
+    "cpf": {
+      "type": "string"
+    },
+    "crea_sc": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "nome"
+  ]
+}

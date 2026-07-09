@@ -7,6 +7,15 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 // Add page imports here
+import Layout from '@/components/Layout';
+import Home from '@/pages/Home';
+import ReportForm from '@/pages/ReportForm';
+import ReportView from '@/pages/ReportView';
+import Clients from '@/pages/Clients';
+import Engineers from '@/pages/Engineers';
+import Electricians from '@/pages/Electricians';
+import Instruments from '@/pages/Instruments';
+import Settings from '@/pages/Settings';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -34,7 +43,17 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <Routes>
-      {/* Add your page Route elements here */}
+      <Route element={<Layout />}>
+        <Route path="/" element={<Home />} />
+        <Route path="/reports/new" element={<ReportForm />} />
+        <Route path="/reports/:id/edit" element={<ReportForm />} />
+        <Route path="/reports/:id" element={<ReportView />} />
+        <Route path="/clients" element={<Clients />} />
+        <Route path="/engineers" element={<Engineers />} />
+        <Route path="/electricians" element={<Electricians />} />
+        <Route path="/instruments" element={<Instruments />} />
+        <Route path="/settings" element={<Settings />} />
+      </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

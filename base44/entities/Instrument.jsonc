@@ -1,0 +1,22 @@
+{
+  "name": "Instrument",
+  "type": "object",
+  "properties": {
+    "marca_modelo": {
+      "type": "string"
+    },
+    "numero_serie": {
+      "type": "string"
+    },
+    "data_calibracao": {
+      "type": "string",
+      "format": "date"
+    },
+    "especificacoes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "marca_modelo"
+  ]
+}

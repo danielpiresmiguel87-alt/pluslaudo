@@ -1,0 +1,85 @@
+{
+  "name": "Report",
+  "type": "object",
+  "properties": {
+    "equipamento": {
+      "type": "string"
+    },
+    "local": {
+      "type": "string"
+    },
+    "data": {
+      "type": "string",
+      "format": "date"
+    },
+    "cliente_id": {
+      "type": "string"
+    },
+    "engenheiro_id": {
+      "type": "string"
+    },
+    "eletricista_id": {
+      "type": "string"
+    },
+    "instrumento_id": {
+      "type": "string"
+    },
+    "numero_art": {
+      "type": "string"
+    },
+    "normas": {
+      "type": "string"
+    },
+    "condicoes_ambiente": {
+      "type": "string"
+    },
+    "objetivo": {
+      "type": "string"
+    },
+    "metodologia": {
+      "type": "string"
+    },
+    "limitacoes": {
+      "type": "string"
+    },
+    "recomendacoes": {
+      "type": "string"
+    },
+    "limite_ohms": {
+      "type": "number",
+      "default": 10
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "aprovado",
+        "reprovado",
+        "rascunho"
+      ],
+      "default": "rascunho"
+    },
+    "measurements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "fotos": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "descricao": {
+            "type": "string"
+          },
+          "valor_medido": {
+            "type": "number"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "equipamento"
+  ]
+}

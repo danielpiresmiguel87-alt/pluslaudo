@@ -1,0 +1,111 @@
+import { useState, useEffect } from 'react';
+import { base44 } from '@/api/base44Client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent } from '@/components/ui/card';
+import { Plus, Pencil, Trash2, X } from 'lucide-react';
+
+export default function EntityCrudPage({ entityName, title, fields }) {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [form, setForm] = useState({});
+
+  const emptyForm = () => fields.reduce((acc, f) => ({ ...acc, [f.name]: '' }), {});
+
+  useEffect(() => {
+    setForm(emptyForm());
+    load();
+  }, []);
+
+  const load = async () => {
+    setLoading(true);
+    const res = await base44.entities[entityName].list();
+    setItems(res);
+    setLoading(false);
+  };
+
+  const save = async () => {
+    if (editingId) await base44.entities[entityName].update(editingId, form);
+    else await base44.entities[entityName].create(form);
+    setForm(emptyForm());
+    setEditingId(null);
+    setShowForm(false);
+    load();
+  };
+
+  const edit = (item) => {
+    setForm(fields.reduce((acc, f) => ({ ...acc, [f.name]: item[f.name] || '' }), {}));
+    setEditingId(item.id);
+    setShowForm(true);
+  };
+
+  const remove = async (id) => {
+    await base44.entities[entityName].delete(id);
+    load();
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">{title}</h1>
+        <Button onClick={() => { setForm(emptyForm()); setEditingId(null); setShowForm(!showForm); }}>
+          {showForm ? <X className="h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+          {showForm ? 'Fechar' : 'Adicionar'}
+        </Button>
+      </div>
+
+      {showForm && (
+        <Card>
+          <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            {fields.map(f => (
+              <div key={f.name} className={f.full ? 'md:col-span-2' : ''}>
+                <Label>{f.label}</Label>
+                {f.type === 'textarea' ? (
+                  <Textarea value={form[f.name] || ''} onChange={e => setForm(s => ({ ...s, [f.name]: e.target.value }))} rows={3} />
+                ) : (
+                  <Input type={f.type || 'text'} value={form[f.name] || ''} onChange={e => setForm(s => ({ ...s, [f.name]: e.target.value }))} />
+                )}
+              </div>
+            ))}
+            <div className="md:col-span-2">
+              <Button onClick={save}>{editingId ? 'Atualizar' : 'Salvar'}</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {loading ? (
+        <p className="text-muted-foreground">Carregando...</p>
+      ) : items.length === 0 ? (
+        <p className="text-muted-foreground text-center py-8">Nenhum registro cadastrado.</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {items.map(item => (
+            <Card key={item.id}>
+              <CardContent className="pt-6">
+                <div className="flex justify-between items-start">
+                  <div className="space-y-1">
+                    {fields.map(f => (
+                      <div key={f.name} className="text-sm">
+                        <span className="text-xs text-muted-foreground">{f.label}: </span>
+                        <span className="font-medium">{item[f.name] || '-'}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => edit(item)}><Pencil className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => remove(item.id)}><Trash2 className="h-4 w-4" /></Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

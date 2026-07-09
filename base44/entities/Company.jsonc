@@ -1,0 +1,36 @@
+{
+  "name": "Company",
+  "type": "object",
+  "properties": {
+    "logo_url": {
+      "type": "string"
+    },
+    "razao_social": {
+      "type": "string"
+    },
+    "cnpj": {
+      "type": "string"
+    },
+    "endereco": {
+      "type": "string"
+    },
+    "cidade": {
+      "type": "string"
+    },
+    "cep": {
+      "type": "string"
+    },
+    "bairro": {
+      "type": "string"
+    },
+    "fone": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "razao_social"
+  ]
+}
