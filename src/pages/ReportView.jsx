@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Pencil, Download, Printer, CheckCircle, Upload, FileText, Save } from 'lucide-react';
+import { ArrowLeft, Pencil, Download, Printer, CheckCircle, Upload, FileText, Save, PenLine } from 'lucide-react';
 import { generateReportPDF } from '@/utils/reportPdf';
+import SignaturePad from '@/components/report/SignaturePad';
 import { formatEnvironmentConditions } from '@/utils/environment';
 
 export default function ReportView() {
@@ -21,6 +22,10 @@ export default function ReportView() {
   const [artDocUrl, setArtDocUrl] = useState('');
   const [savingArt, setSavingArt] = useState(false);
   const [uploadingArt, setUploadingArt] = useState(false);
+  const [signing, setSigning] = useState(false);
+  const [savingSignatures, setSavingSignatures] = useState(false);
+  const engSigRef = useRef(null);
+  const cliSigRef = useRef(null);
 
   useEffect(() => {
     base44.auth.me().then(setCurrentUser).catch(() => {});
@@ -109,6 +114,39 @@ export default function ReportView() {
 
   const isEngenheiro = userRole === 'engenheiro';
   const canManageArt = isEngenheiro || canEdit;
+  const canSign = canEdit || isEngenheiro || isEletricista;
+
+  const handleSaveSignatures = async () => {
+    setSavingSignatures(true);
+    try {
+      const updates = {};
+      const engSig = engSigRef.current?.toDataURL();
+      const cliSig = cliSigRef.current?.toDataURL();
+      if (!engSig && !cliSig) {
+        alert('Desenhe pelo menos uma assinatura.');
+        setSavingSignatures(false);
+        return;
+      }
+      if (engSig) {
+        const blob = await (await fetch(engSig)).blob();
+        const file = new File([blob], 'assinatura-engenheiro.png', { type: 'image/png' });
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        updates.assinatura_engenheiro_url = file_url;
+      }
+      if (cliSig) {
+        const blob = await (await fetch(cliSig)).blob();
+        const file = new File([blob], 'assinatura-cliente.png', { type: 'image/png' });
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        updates.assinatura_cliente_url = file_url;
+      }
+      await base44.entities.Report.update(id, updates);
+      setReport({ ...report, ...updates });
+      setSigning(false);
+    } catch (e) {
+      alert('Erro ao salvar assinaturas: ' + e.message);
+    }
+    setSavingSignatures(false);
+  };
 
   const InfoRow = ({ label, value }) => (
     <div className="flex gap-2 text-sm py-1">
@@ -312,6 +350,58 @@ export default function ReportView() {
       <Section title="Objetivo"><p className="text-sm whitespace-pre-wrap">{report.objetivo}</p></Section>
       <Section title="Metodologia"><p className="text-sm whitespace-pre-wrap">{report.metodologia}</p></Section>
       <Section title="Recomendações Finais"><p className="text-sm whitespace-pre-wrap">{report.recomendacoes}</p></Section>
+
+      <Section title="Assinaturas">
+        {!signing ? (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <span className="text-sm font-medium text-muted-foreground">Engenheiro Responsável</span>
+                {report.assinatura_engenheiro_url ? (
+                  <img src={report.assinatura_engenheiro_url} alt="Assinatura do engenheiro" className="mt-2 max-h-20 border-b border-gray-400 pb-1" />
+                ) : (
+                  <div className="mt-2 h-20 border-b border-gray-300 flex items-end pb-1">
+                    <span className="text-xs text-muted-foreground/50">Sem assinatura</span>
+                  </div>
+                )}
+                <p className="text-sm font-medium mt-1">{data.engineer?.nome || '-'}</p>
+                <p className="text-xs text-muted-foreground">CREA-SC: {data.engineer?.crea_sc || '-'}</p>
+              </div>
+              <div>
+                <span className="text-sm font-medium text-muted-foreground">Cliente / Contratante</span>
+                {report.assinatura_cliente_url ? (
+                  <img src={report.assinatura_cliente_url} alt="Assinatura do cliente" className="mt-2 max-h-20 border-b border-gray-400 pb-1" />
+                ) : (
+                  <div className="mt-2 h-20 border-b border-gray-300 flex items-end pb-1">
+                    <span className="text-xs text-muted-foreground/50">Sem assinatura</span>
+                  </div>
+                )}
+                <p className="text-sm font-medium mt-1">{data.client?.razao_social || '-'}</p>
+                <p className="text-xs text-muted-foreground">CNPJ: {data.client?.cnpj || '-'}</p>
+              </div>
+            </div>
+            {canSign && (
+              <Button variant="outline" onClick={() => setSigning(true)}>
+                <PenLine className="h-4 w-4 mr-2" />
+                {report.assinatura_engenheiro_url || report.assinatura_cliente_url ? 'Refazer Assinaturas' : 'Coletar Assinaturas'}
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <SignaturePad ref={engSigRef} label="Assinatura do Engenheiro" />
+              <SignaturePad ref={cliSigRef} label="Assinatura do Cliente" />
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleSaveSignatures} disabled={savingSignatures}>
+                <Save className="h-4 w-4 mr-2" /> {savingSignatures ? 'Salvando...' : 'Salvar Assinaturas'}
+              </Button>
+              <Button variant="outline" onClick={() => setSigning(false)}>Cancelar</Button>
+            </div>
+          </div>
+        )}
+      </Section>
     </div>
   );
 }

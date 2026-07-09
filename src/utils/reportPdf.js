@@ -619,15 +619,29 @@ export async function generateReportPDF(report, data) {
   para(report.recomendacoes);
 
   // ── ASSINATURAS ── (engenheiro e cliente lado a lado)
-  ensure(55);
-  y += 12;
+  let engSigImg = null;
+  let cliSigImg = null;
+  if (report.assinatura_engenheiro_url) engSigImg = await loadImage(report.assinatura_engenheiro_url);
+  if (report.assinatura_cliente_url) cliSigImg = await loadImage(report.assinatura_cliente_url);
+
+  const sigImgH = 22;
+  ensure(sigImgH + 40);
+  y += 8;
   doc.setDrawColor(80);
   doc.setLineWidth(0.4);
-  const sigY = y + 20;
+  const sigY = y + sigImgH;
   const sigW = (W - 2 * M - 20) / 2;
   const engX = M;
   const cliX = M + sigW + 20;
 
+  // Assinatura do engenheiro (imagem acima da linha)
+  if (engSigImg) {
+    const ratio = engSigImg.h / engSigImg.w;
+    let iw = sigW * 0.8;
+    let ih = iw * ratio;
+    if (ih > sigImgH) { ih = sigImgH; iw = ih / ratio; }
+    addImg(doc, engSigImg, engX + (sigW - iw) / 2, sigY - ih, iw, ih);
+  }
   // Linha de assinatura do engenheiro
   doc.line(engX, sigY, engX + sigW, sigY);
   doc.setFontSize(10);
@@ -643,6 +657,14 @@ export async function generateReportPDF(report, data) {
   }
   doc.setTextColor(0, 0, 0);
 
+  // Assinatura do cliente (imagem acima da linha)
+  if (cliSigImg) {
+    const ratio = cliSigImg.h / cliSigImg.w;
+    let iw = sigW * 0.8;
+    let ih = iw * ratio;
+    if (ih > sigImgH) { ih = sigImgH; iw = ih / ratio; }
+    addImg(doc, cliSigImg, cliX + (sigW - iw) / 2, sigY - ih, iw, ih);
+  }
   // Linha de assinatura do cliente
   doc.line(cliX, sigY, cliX + sigW, sigY);
   doc.setFontSize(10);

@@ -78,6 +78,12 @@
       ],
       "default": "rascunho"
     },
+    "assinatura_engenheiro_url": {
+      "type": "string"
+    },
+    "assinatura_cliente_url": {
+      "type": "string"
+    },
     "measurements": {
       "type": "array",
       "items": {
