@@ -539,22 +539,16 @@ export async function generateReportPDF(report, data) {
   doc.setLineWidth(0.4);
   const sigY = y + 20;
   doc.line(M, sigY, M + 75, sigY);
-  doc.line(W - M - 75, sigY, W - M, sigY);
   doc.setFontSize(10);
   doc.setFont(undefined, 'bold');
   doc.setTextColor(...COLOR_PRIMARY);
   doc.text(engineer?.nome || '_______________________________', M, sigY + 5);
-  doc.text(company?.razao_social || '', W - M - 75, sigY + 5, { maxWidth: 75 });
   doc.setFont(undefined, 'normal');
   doc.setFontSize(9);
   doc.setTextColor(...COLOR_GRAY);
   doc.text('Engenheiro Eletricista Responsável', M, sigY + 10);
-  doc.text('Representante Legal', W - M - 75, sigY + 10);
   if (engineer?.crea_sc) {
     doc.text(`CREA-SC: ${engineer.crea_sc}`, M, sigY + 15);
-  }
-  if (company?.cnpj) {
-    doc.text(`CNPJ: ${company.cnpj}`, W - M - 75, sigY + 15);
   }
   doc.setTextColor(0, 0, 0);
 
