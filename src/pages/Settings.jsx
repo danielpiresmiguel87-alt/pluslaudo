@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Upload, Save } from 'lucide-react';
+import { Upload, Save, UserPlus } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function Settings() {
   const [form, setForm] = useState({ logo_url: '', razao_social: '', cnpj: '', endereco: '', cidade: '', cep: '', bairro: '', fone: '', email: '' });
@@ -12,6 +13,9 @@ export default function Settings() {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [user, setUser] = useState(null);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState('user');
+  const [inviting, setInviting] = useState(false);
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -34,6 +38,19 @@ export default function Settings() {
     if (companyId) await base44.entities.Company.update(companyId, form);
     else { const created = await base44.entities.Company.create(form); setCompanyId(created.id); }
     setSaving(false);
+  };
+
+  const handleInvite = async () => {
+    if (!inviteEmail) return;
+    setInviting(true);
+    try {
+      await base44.users.inviteUser(inviteEmail, inviteRole);
+      alert(`Convite enviado para ${inviteEmail} (${inviteRole})`);
+      setInviteEmail('');
+    } catch (e) {
+      alert('Erro ao convidar: ' + e.message);
+    }
+    setInviting(false);
   };
 
   if (user && user.role !== 'admin') {
@@ -72,6 +89,31 @@ export default function Settings() {
       </Card>
 
       <Button onClick={save} disabled={saving}><Save className="h-4 w-4 mr-2" />{saving ? 'Salvando...' : 'Salvar'}</Button>
+
+      <Card>
+        <CardHeader><CardTitle>Convidar Usuário</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col md:flex-row gap-3">
+            <Input
+              type="email"
+              placeholder="E-mail do convidado"
+              value={inviteEmail}
+              onChange={e => setInviteEmail(e.target.value)}
+              className="flex-1"
+            />
+            <Select value={inviteRole} onValueChange={setInviteRole}>
+              <SelectTrigger className="w-full md:w-40"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="user">Usuário</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button onClick={handleInvite} disabled={inviting || !inviteEmail}>
+              <UserPlus className="h-4 w-4 mr-2" /> {inviting ? 'Enviando...' : 'Convidar'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
