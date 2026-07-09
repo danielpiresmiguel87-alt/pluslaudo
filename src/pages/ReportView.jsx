@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Pencil, Download } from 'lucide-react';
+import { ArrowLeft, Pencil, Download, Printer } from 'lucide-react';
 import { generateReportPDF } from '@/utils/reportPdf';
 import { formatEnvironmentConditions } from '@/utils/environment';
 
@@ -70,6 +70,7 @@ export default function ReportView() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => navigate(`/reports/${id}/edit`)}><Pencil className="h-4 w-4 mr-2" />Editar</Button>
+          <Button variant="outline" onClick={() => window.print()}><Printer className="h-4 w-4 mr-2" />Imprimir</Button>
           <Button onClick={handlePdf} disabled={exporting}><Download className="h-4 w-4 mr-2" />{exporting ? 'Gerando...' : 'Exportar PDF'}</Button>
         </div>
       </div>

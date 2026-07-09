@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Upload, Trash2, Plus, X } from 'lucide-react';
+import { Upload, Trash2, Plus, X, Camera } from 'lucide-react';
 import { capturarFoto } from '@/lib/offline';
 
 const getFotoSrc = (foto) => {
@@ -94,6 +94,16 @@ export default function MeasurementEditor({ measurements, limite, onChange }) {
                   type="file"
                   multiple
                   accept="image/*"
+                  className="hidden"
+                  onChange={e => handlePhotoUpload(i, Array.from(e.target.files))}
+                />
+              </label>
+              <label className="h-20 w-20 border-2 border-dashed rounded flex items-center justify-center cursor-pointer hover:bg-muted">
+                <Camera className="h-5 w-5 text-muted-foreground" />
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
                   className="hidden"
                   onChange={e => handlePhotoUpload(i, Array.from(e.target.files))}
                 />
