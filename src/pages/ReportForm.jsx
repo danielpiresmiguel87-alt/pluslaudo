@@ -19,6 +19,7 @@ import {
   uploadFotosEmLote,
   useBloquearSaida,
 } from '@/lib/offline';
+import { formatEnvironmentConditions } from '@/utils/environment';
 
 const DEFAULT_OBJECTIVE = "O presente laudo técnico tem por objetivo, determinar o valor Ôhmico referente ao aterramento de equipamentos juntamente ao sistema de proteção contra descargas atmosféricas instalado na empresa, conforme PPCI (projeto preventivo contra incêndio), atendendo a resolução n° 017/CAT/CCB/88 do Corpo de bombeiros da Polícia militar do Estado de Santa Catarina.";
 
@@ -143,7 +144,8 @@ export default function ReportForm() {
       const status = updatedMeasurements.length === 0 ? 'rascunho' :
         updatedMeasurements.every(m => (m.valor_medido ?? Infinity) <= lim) ? 'aprovado' : 'reprovado';
       const validade = form.data ? new Date(new Date(form.data).getTime() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : undefined;
-      const payload = { ...form, measurements: updatedMeasurements, status, validade };
+      const condicoesStr = formatEnvironmentConditions(form.condicoes_ambiente);
+      const payload = { ...form, condicoes_ambiente: condicoesStr || undefined, measurements: updatedMeasurements, status, validade };
       if (isNew) {
         const created = await base44.entities.Report.create(payload);
         limparRascunho(draftKey);
