@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { Plus, Pencil, Trash2, X, Search } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Search, Upload } from 'lucide-react';
 
 export default function EntityCrudPage({ entityName, title, fields }) {
   const [items, setItems] = useState([]);
@@ -14,6 +14,19 @@ export default function EntityCrudPage({ entityName, title, fields }) {
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({});
   const [lookingUp, setLookingUp] = useState(false);
+  const [uploadingField, setUploadingField] = useState(null);
+
+  const handleImageUpload = async (field, file) => {
+    if (!file) return;
+    setUploadingField(field);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setForm(s => ({ ...s, [field]: file_url }));
+    } catch (e) {
+      alert('Erro ao enviar imagem: ' + e.message);
+    }
+    setUploadingField(null);
+  };
 
   const emptyForm = () => fields.reduce((acc, f) => ({ ...acc, [f.name]: '' }), {});
 
@@ -77,7 +90,26 @@ export default function EntityCrudPage({ entityName, title, fields }) {
             {fields.map(f => (
               <div key={f.name} className={f.full ? 'md:col-span-2' : ''}>
                 <Label>{f.label}</Label>
-                {f.type === 'textarea' ? (
+                {f.type === 'image' ? (
+                  <div className="space-y-2">
+                    {form[f.name] && (
+                      <img src={form[f.name]} alt="Preview" className="h-20 object-contain rounded border" />
+                    )}
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" size="sm" disabled={uploadingField === f.name}
+                        onClick={() => document.getElementById(`upload-${f.name}`).click()}>
+                        <Upload className="h-4 w-4 mr-1" /> {uploadingField === f.name ? 'Enviando...' : 'Enviar Logo'}
+                      </Button>
+                      {form[f.name] && (
+                        <Button type="button" variant="ghost" size="sm" onClick={() => setForm(s => ({ ...s, [f.name]: '' }))}>
+                          Remover
+                        </Button>
+                      )}
+                      <input id={`upload-${f.name}`} type="file" accept="image/*" className="hidden"
+                        onChange={e => { const file = e.target.files?.[0]; if (file) handleImageUpload(f.name, file); e.target.value = ''; }} />
+                    </div>
+                  </div>
+                ) : f.type === 'textarea' ? (
                   <Textarea value={form[f.name] || ''} onChange={e => setForm(s => ({ ...s, [f.name]: e.target.value }))} rows={3} />
                 ) : f.lookup === 'cnpj' ? (
                   <div className="flex gap-2">
@@ -109,14 +141,17 @@ export default function EntityCrudPage({ entityName, title, fields }) {
               <CardContent className="pt-6">
                 <div className="flex justify-between items-start">
                   <div className="space-y-1">
-                    {fields.map(f => (
+                    {fields.filter(f => f.type !== 'image').map(f => (
                       <div key={f.name} className="text-sm">
                         <span className="text-xs text-muted-foreground">{f.label}: </span>
                         <span className="font-medium">{item[f.name] || '-'}</span>
                       </div>
                     ))}
                   </div>
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 items-start">
+                    {fields.filter(f => f.type === 'image').map(f => item[f.name] ? (
+                      <img key={f.name} src={item[f.name]} alt="Logo" className="h-12 object-contain rounded" />
+                    ) : null)}
                     <Button variant="ghost" size="icon" onClick={() => edit(item)}><Pencil className="h-4 w-4" /></Button>
                     <Button variant="ghost" size="icon" onClick={() => remove(item.id)}><Trash2 className="h-4 w-4" /></Button>
                   </div>

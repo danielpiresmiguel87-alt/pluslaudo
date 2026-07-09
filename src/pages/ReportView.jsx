@@ -122,6 +122,9 @@ export default function ReportView() {
       </Section>
 
       <Section title="Cliente">
+        {data.client?.logo_url && (
+          <img src={data.client.logo_url} alt="Logo do cliente" className="h-20 object-contain mb-4" />
+        )}
         <InfoRow label="Razão Social" value={data.client?.razao_social} />
         <InfoRow label="CNPJ" value={data.client?.cnpj} />
         <InfoRow label="Endereço" value={data.client?.endereco} />

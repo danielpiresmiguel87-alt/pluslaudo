@@ -84,6 +84,13 @@ export async function generateReportPDF(report, data) {
   }
 
   section('1. DADOS DA AVALIAÇÃO');
+  if (client?.logo_url) {
+    const clientImg = await loadImage(client.logo_url);
+    if (clientImg) {
+      const ratio = clientImg.h / clientImg.w;
+      doc.addImage(clientImg.dataURL, 'JPEG', W - M - 35, y, 35, 35 * ratio);
+    }
+  }
   kv('CNPJ', client?.cnpj);
   kv('Razão Social', client?.razao_social);
   kv('Endereço', client?.endereco);

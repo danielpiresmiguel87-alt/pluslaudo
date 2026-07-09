@@ -22,6 +22,9 @@
     },
     "fone": {
       "type": "string"
+    },
+    "logo_url": {
+      "type": "string"
     }
   },
   "required": [
