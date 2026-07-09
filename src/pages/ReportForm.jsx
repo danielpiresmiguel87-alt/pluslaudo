@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import MeasurementEditor from '@/components/report/MeasurementEditor';
-import { ArrowLeft, Save } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { ArrowLeft, Save, Plus } from 'lucide-react';
 
 const DEFAULT_OBJECTIVE = "O presente laudo técnico tem por objetivo, determinar o valor Ôhmico referente ao aterramento de equipamentos juntamente ao sistema de proteção contra descargas atmosféricas instalado na empresa, conforme PPCI (projeto preventivo contra incêndio), atendendo a resolução n° 017/CAT/CCB/88 do Corpo de bombeiros da Polícia militar do Estado de Santa Catarina.";
 
@@ -36,6 +37,8 @@ export default function ReportForm() {
     limitacoes: '', recomendacoes: DEFAULT_RECOMMENDATIONS,
     limite_ohms: 10, measurements: [],
   });
+  const [showClientDialog, setShowClientDialog] = useState(false);
+  const [clientForm, setClientForm] = useState({ razao_social: '', cnpj: '', endereco: '', cidade: '', cep: '', bairro: '', fone: '' });
 
   useEffect(() => {
     Promise.all([
@@ -99,7 +102,12 @@ export default function ReportForm() {
         <CardHeader><CardTitle>Partes Envolvidas</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label>Cliente</Label>
+            <div className="flex items-center justify-between">
+              <Label>Cliente</Label>
+              <Button type="button" variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => setShowClientDialog(true)}>
+                <Plus className="h-3 w-3 mr-1" /> Novo
+              </Button>
+            </div>
             <Select value={form.cliente_id || 'none'} onValueChange={v => set('cliente_id', v === 'none' ? '' : v)}>
               <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
               <SelectContent>
@@ -177,6 +185,37 @@ export default function ReportForm() {
         </Button>
         <Button variant="outline" onClick={() => navigate(-1)}>Cancelar</Button>
       </div>
+
+      <Dialog open={showClientDialog} onOpenChange={setShowClientDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Cadastrar Novo Cliente</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
+            <div className="md:col-span-2">
+              <Label>Razão Social *</Label>
+              <Input value={clientForm.razao_social} onChange={e => setClientForm(s => ({ ...s, razao_social: e.target.value }))} />
+            </div>
+            <div><Label>CNPJ</Label><Input value={clientForm.cnpj} onChange={e => setClientForm(s => ({ ...s, cnpj: e.target.value }))} /></div>
+            <div><Label>Fone</Label><Input value={clientForm.fone} onChange={e => setClientForm(s => ({ ...s, fone: e.target.value }))} /></div>
+            <div className="md:col-span-2"><Label>Endereço</Label><Input value={clientForm.endereco} onChange={e => setClientForm(s => ({ ...s, endereco: e.target.value }))} /></div>
+            <div><Label>Cidade</Label><Input value={clientForm.cidade} onChange={e => setClientForm(s => ({ ...s, cidade: e.target.value }))} /></div>
+            <div><Label>CEP</Label><Input value={clientForm.cep} onChange={e => setClientForm(s => ({ ...s, cep: e.target.value }))} /></div>
+            <div><Label>Bairro</Label><Input value={clientForm.bairro} onChange={e => setClientForm(s => ({ ...s, bairro: e.target.value }))} /></div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowClientDialog(false)}>Cancelar</Button>
+            <Button onClick={async () => {
+              if (!clientForm.razao_social) return;
+              const created = await base44.entities.Client.create(clientForm);
+              setClients(s => [...s, created]);
+              set('cliente_id', created.id);
+              setClientForm({ razao_social: '', cnpj: '', endereco: '', cidade: '', cep: '', bairro: '', fone: '' });
+              setShowClientDialog(false);
+            }}>Salvar Cliente</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
