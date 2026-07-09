@@ -786,5 +786,5 @@ export async function generateReportPDF(report, data) {
     drawFooter();
   }
 
-  doc.save(`Laudo-${report.equipamento || 'Aterramento'}.pdf`);
+  return doc;
 }

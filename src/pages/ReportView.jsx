@@ -51,7 +51,22 @@ export default function ReportView() {
 
   const handlePdf = async () => {
     setExporting(true);
-    try { await generateReportPDF(report, data); } catch (e) { console.error(e); }
+    try {
+      const doc = await generateReportPDF(report, data);
+      doc.save(`Laudo-${report.equipamento || 'Aterramento'}.pdf`);
+    } catch (e) { console.error(e); }
+    setExporting(false);
+  };
+
+  const handlePrint = async () => {
+    setExporting(true);
+    try {
+      const doc = await generateReportPDF(report, data);
+      doc.autoPrint();
+      const blobUrl = doc.output('bloburl');
+      const win = window.open(blobUrl, '_blank');
+      if (!win) window.location.href = blobUrl;
+    } catch (e) { console.error(e); }
     setExporting(false);
   };
 
@@ -179,7 +194,7 @@ export default function ReportView() {
           {canEdit && ws === 'pendente_revisao' && (
             <Button onClick={handleConcluir}><CheckCircle className="h-4 w-4 mr-2" />Concluir Laudo</Button>
           )}
-          <Button variant="outline" onClick={() => window.print()}><Printer className="h-4 w-4 mr-2" />Imprimir</Button>
+          <Button variant="outline" onClick={handlePrint} disabled={exporting}><Printer className="h-4 w-4 mr-2" />{exporting ? 'Gerando...' : 'Imprimir'}</Button>
           <Button onClick={handlePdf} disabled={exporting}><Download className="h-4 w-4 mr-2" />{exporting ? 'Gerando...' : 'Exportar PDF'}</Button>
         </div>
       </div>
