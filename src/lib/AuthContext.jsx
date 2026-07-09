@@ -94,6 +94,19 @@ export const AuthProvider = ({ children }) => {
       // Now check if the user is authenticated
       setIsLoadingAuth(true);
       const currentUser = await base44.auth.me();
+      
+      // auth.me() may not return custom fields like role — fetch full record
+      if (currentUser && currentUser.id && !currentUser.role) {
+        try {
+          const fullUser = await base44.entities.User.get(currentUser.id);
+          if (fullUser) {
+            currentUser.role = fullUser.role;
+          }
+        } catch (e) {
+          console.warn('Could not fetch full user record:', e);
+        }
+      }
+      
       setUser(currentUser);
       setIsAuthenticated(true);
       setIsLoadingAuth(false);

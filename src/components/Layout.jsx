@@ -9,16 +9,12 @@ export default function Layout() {
   const { user } = useAuth();
   const [company, setCompany] = useState(null);
   const [open, setOpen] = useState(false);
-  const [roleFromFn, setRoleFromFn] = useState(null);
 
   useEffect(() => {
     base44.entities.Company.list().then(res => { if (res[0]) setCompany(res[0]); });
-    base44.functions.invoke('getUserRole', {})
-      .then(res => setRoleFromFn(res?.data?.role || res?.role))
-      .catch(() => {});
   }, []);
 
-  const userRole = user?.role || roleFromFn;
+  const userRole = user?.role;
   const isAdmin = userRole === 'admin';
   const canManage = userRole === 'admin' || userRole === 'coordenador';
   const navItems = [
