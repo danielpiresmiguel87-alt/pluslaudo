@@ -39,7 +39,7 @@ export default function Home() {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    base44.auth.me().then(setCurrentUser).catch(() => {});
+    base44.auth.me().then(setCurrentUser).catch(() => setLoading(false));
     Promise.all([
       base44.entities.Report.list('-created_date'),
       base44.entities.Client.list(),
@@ -47,7 +47,7 @@ export default function Home() {
       setReports(r);
       setClients(c);
       setLoading(false);
-    });
+    }).catch(() => setLoading(false));
   }, []);
 
   const userRole = currentUser?.role;
@@ -114,7 +114,7 @@ export default function Home() {
 
   const title = isEletricista ? 'Medições Pendentes' : isEngenheiro ? 'Laudos para Revisão' : 'Dashboard de Laudos';
 
-  if (loading || !currentUser) {
+  if (loading) {
     return <p className="text-muted-foreground">Carregando...</p>;
   }
 
