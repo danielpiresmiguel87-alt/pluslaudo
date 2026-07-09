@@ -332,13 +332,13 @@ export async function generateReportPDF(report, data) {
   section(11, 'LEVANTAMENTO DE DADOS');
   kv('Equipamento Avaliado', report.equipamento);
   kv('Tag de Identificação', report.tag_equipamento);
-  kv('Limite de Referência', `${lim} Ω (Ohms)`);
-  kv('Norma de Referência', 'NSCI/94 - Máximo 10 Ω');
+  kv('Limite de Referência', `${lim} Ohms`);
+  kv('Norma de Referência', 'NSCI/94 - Máximo 10 Ohms');
   y += 2;
   doc.setFontSize(10);
   doc.setFont(undefined, 'italic');
   doc.setTextColor(...COLOR_GRAY);
-  doc.text('Conforme NSCI/94, o valor de resistência ôhmica do sistema de aterramento não pode ser superior a 10 Ω em qualquer período do ano.', M, y, { maxWidth: W - 2 * M });
+  doc.text('Conforme NSCI/94, o valor de resistência ôhmica do sistema de aterramento não pode ser superior a 10 Ohms em qualquer período do ano.', M, y, { maxWidth: W - 2 * M });
   y += 8;
   doc.setTextColor(0, 0, 0);
 
@@ -351,7 +351,7 @@ export async function generateReportPDF(report, data) {
     // Tabela de resultados
     const colX = [M, M + 10, M + 95, M + 140, M + 165];
     const colW = [10, 85, 45, 25, 27];
-    const colLabels = ['#', 'Descrição / Local', 'Valor (Ω)', 'Limite (Ω)', 'Status'];
+    const colLabels = ['#', 'Descrição / Local', 'Valor (Ohms)', 'Limite (Ohms)', 'Status'];
 
     // Header da tabela
     doc.setFillColor(...COLOR_PRIMARY);
@@ -463,7 +463,7 @@ export async function generateReportPDF(report, data) {
         const approved = (m.valor_medido ?? Infinity) <= lim;
         doc.text(`Valor:`, W - M - 55, y);
         doc.setFont(undefined, 'bold');
-        doc.text(`${m.valor_medido} Ω`, W - M - 42, y);
+        doc.text(`${m.valor_medido} Ohms`, W - M - 42, y);
         doc.setFont(undefined, 'normal');
         doc.text(`Status:`, W - M - 28, y);
         doc.setFont(undefined, 'bold');
@@ -512,9 +512,9 @@ export async function generateReportPDF(report, data) {
   // ── PARECER TÉCNICO ──
   section(hasMeas ? 14 : 13, 'PARECER TÉCNICO');
   const conclusion = allApproved
-    ? `Após a coleta e análise dos dados obtidos mediante medição realizada com instrumento calibrado, conclui-se que os valores de resistência ôhmica do aterramento da máquina/equipamento avaliado estão DENTRO dos padrões pré-estabelecidos pela NSCI/94 (Norma de Segurança contra Incêndio) e atendem aos requisitos de segurança estabelecidos pela NR-12 (Segurança no Trabalho em Máquinas e Equipamentos).\n\nConforme a referida norma, o sistema de aterramento não poderá apresentar resistência superior a ${lim} Ω (Ohms) em qualquer época do ano. Todos os pontos medidos apresentaram valores iguais ou inferiores ao limite estabelecido.\n\nPortanto, atesta-se que este equipamento, para fins de aterramento elétrico e proteção contra descargas atmosféricas, está APTO para operação contínua, estando em conformidade com as exigências do Corpo de Bombeiros da Polícia Militar do Estado de Santa Catarina (Resolução nº 017/CAT/CCB/88) e do PPCI da empresa.`
+    ? `Após a coleta e análise dos dados obtidos mediante medição realizada com instrumento calibrado, conclui-se que os valores de resistência ôhmica do aterramento da máquina/equipamento avaliado estão DENTRO dos padrões pré-estabelecidos pela NSCI/94 (Norma de Segurança contra Incêndio) e atendem aos requisitos de segurança estabelecidos pela NR-12 (Segurança no Trabalho em Máquinas e Equipamentos).\n\nConforme a referida norma, o sistema de aterramento não poderá apresentar resistência superior a ${lim} Ohms em qualquer época do ano. Todos os pontos medidos apresentaram valores iguais ou inferiores ao limite estabelecido.\n\nPortanto, atesta-se que este equipamento, para fins de aterramento elétrico e proteção contra descargas atmosféricas, está APTO para operação contínua, estando em conformidade com as exigências do Corpo de Bombeiros da Polícia Militar do Estado de Santa Catarina (Resolução nº 017/CAT/CCB/88) e do PPCI da empresa.`
     : hasMeas
-    ? `Após a coleta e análise dos dados obtidos mediante medição realizada com instrumento calibrado, conclui-se que uma ou mais medições apresentaram valores de resistência ôhmica ACIMA do limite máximo de ${lim} Ω (Ohms) estabelecido pela NSCI/94 e NR-12.\n\nPortanto, atesta-se que o sistema de aterramento da máquina/equipamento avaliado está INAPTO para operação, sendo necessárias intervenções corretivas no sistema de aterramento para adequação aos padrões de segurança exigidos.\n\nRecomenda-se a execução imediata de medidas corretivas, seguida de nova medição de verificação para confirmação da conformidade.`
+    ? `Após a coleta e análise dos dados obtidos mediante medição realizada com instrumento calibrado, conclui-se que uma ou mais medições apresentaram valores de resistência ôhmica ACIMA do limite máximo de ${lim} Ohms estabelecido pela NSCI/94 e NR-12.\n\nPortanto, atesta-se que o sistema de aterramento da máquina/equipamento avaliado está INAPTO para operação, sendo necessárias intervenções corretivas no sistema de aterramento para adequação aos padrões de segurança exigidos.\n\nRecomenda-se a execução imediata de medidas corretivas, seguida de nova medição de verificação para confirmação da conformidade.`
     : 'Laudo sem medições registradas. O parecer técnico será emitido após a realização das medições de resistência ôhmica de aterramento.';
   para(conclusion);
 
