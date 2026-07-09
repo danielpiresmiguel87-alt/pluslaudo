@@ -348,10 +348,10 @@ export async function generateReportPDF(report, data) {
   if (!hasMeas) {
     para('Nenhuma medição foi registrada neste laudo.', { justify: false });
   } else {
-    // Tabela de resultados
-    const colX = [M, M + 10, M + 95, M + 140, M + 165];
-    const colW = [10, 85, 45, 25, 27];
-    const colLabels = ['#', 'Descrição / Local', 'Valor (Ohms)', 'Limite (Ohms)', 'Status'];
+    // Tabela de resultados — larguras somam W - 2*M (174mm)
+    const colW = [8, 78, 28, 28, 32];
+    const colX = [M, M + 8, M + 86, M + 114, M + 142];
+    const colLabels = ['Nº', 'Descrição / Local', 'Valor (Ohms)', 'Limite (Ohms)', 'Status'];
 
     // Header da tabela
     doc.setFillColor(...COLOR_PRIMARY);
