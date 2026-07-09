@@ -13,10 +13,16 @@ function loadImage(url) {
         canvas.getContext('2d').drawImage(img, 0, 0);
         resolve({ dataURL: canvas.toDataURL('image/jpeg', 0.85), w: img.naturalWidth, h: img.naturalHeight });
       } catch {
-        resolve(null);
+        resolve({ img, w: img.naturalWidth, h: img.naturalHeight });
       }
     };
-    img.onerror = () => resolve(null);
+    img.onerror = () => {
+      // Retry without crossOrigin (allows load but canvas will be tainted)
+      const img2 = new Image();
+      img2.onload = () => resolve({ img: img2, w: img2.naturalWidth, h: img2.naturalHeight });
+      img2.onerror = () => resolve(null);
+      img2.src = url;
+    };
     img.src = url;
   });
 }
@@ -24,6 +30,14 @@ function loadImage(url) {
 function formatDate(d) {
   if (!d) return '';
   try { return new Date(d).toLocaleDateString('pt-BR'); } catch { return d; }
+}
+
+function addImg(doc, imgData, x, y, w, h) {
+  if (imgData.img) {
+    doc.addImage(imgData.img, x, y, w, h);
+  } else if (imgData.dataURL) {
+    doc.addImage(imgData.dataURL, 'JPEG', x, y, w, h);
+  }
 }
 
 export async function generateReportPDF(report, data) {
@@ -131,7 +145,7 @@ export async function generateReportPDF(report, data) {
       const ratio = img.h / img.w;
       const iw = 38;
       const ih = iw * ratio;
-      doc.addImage(img.dataURL, 'JPEG', M, y, iw, Math.min(ih, 30));
+      addImg(doc, img, M, y, iw, Math.min(ih, 30));
       companyLogoH = Math.min(ih, 30);
     }
   }
@@ -142,7 +156,7 @@ export async function generateReportPDF(report, data) {
       const ratio = clientImg.h / clientImg.w;
       const iw = 38;
       const ih = iw * ratio;
-      doc.addImage(clientImg.dataURL, 'JPEG', W - M - iw, y, iw, Math.min(ih, 30));
+      addImg(doc, clientImg, W - M - iw, y, iw, Math.min(ih, 30));
     }
   }
   y += Math.max(companyLogoH, 30) + 6;
@@ -305,7 +319,7 @@ export async function generateReportPDF(report, data) {
     doc.setDrawColor(...COLOR_ACCENT);
     doc.setLineWidth(0.3);
     doc.rect(ix - 1, y - 1, iw + 2, ih + 2);
-    doc.addImage(img.dataURL, 'JPEG', ix, y, iw, ih);
+    addImg(doc, img, ix, y, iw, ih);
     y += ih + 8;
   }
 
@@ -464,7 +478,7 @@ export async function generateReportPDF(report, data) {
         doc.setDrawColor(...COLOR_ACCENT);
         doc.setLineWidth(0.3);
         doc.rect(fx - 1, y - 1, actualW + 2, ph + 2);
-        doc.addImage(img.dataURL, 'JPEG', fx, y, actualW, ph);
+        addImg(doc, img, fx, y, actualW, ph);
         y += ph + 3;
 
         // Legenda ABAIXO da foto (fora da borda)
@@ -652,7 +666,7 @@ export async function generateReportPDF(report, data) {
         doc.setDrawColor(...COLOR_ACCENT);
         doc.setLineWidth(0.3);
         doc.rect(W / 2 - iw / 2 - 1, y - 2, iw + 2, ih + 2);
-        doc.addImage(img.dataURL, 'JPEG', W / 2 - iw / 2, y - 1, iw, ih);
+        addImg(doc, img, W / 2 - iw / 2, y - 1, iw, ih);
         y += ih + 8;
       }
     }
