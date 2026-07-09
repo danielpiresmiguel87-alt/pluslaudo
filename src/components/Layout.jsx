@@ -6,7 +6,7 @@ import { FileText, Users, HardHat, Wrench, Gauge, Settings, Menu, LogOut } from 
 import { Button } from '@/components/ui/button';
 
 export default function Layout() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [company, setCompany] = useState(null);
   const [open, setOpen] = useState(false);
 
@@ -30,7 +30,7 @@ export default function Layout() {
   }
   if (isAdmin) navItems.push({ to: '/settings', label: 'Configurações', icon: Settings });
 
-  const handleLogout = () => base44.auth.logout();
+  const handleLogout = () => logout();
 
   const sidebar = (
     <div className="flex flex-col h-full">
