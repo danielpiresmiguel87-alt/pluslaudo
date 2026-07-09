@@ -65,6 +65,16 @@
       ],
       "default": "rascunho"
     },
+    "workflow_status": {
+      "type": "string",
+      "enum": [
+        "rascunho",
+        "pendente_medicao",
+        "pendente_revisao",
+        "concluido"
+      ],
+      "default": "rascunho"
+    },
     "measurements": {
       "type": "array",
       "items": {

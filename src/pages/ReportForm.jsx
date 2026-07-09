@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import MeasurementEditor from '@/components/report/MeasurementEditor';
 import EnvironmentConditions from '@/components/report/EnvironmentConditions';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ArrowLeft, Save, Plus, Search } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Search, Send, CheckCircle } from 'lucide-react';
 import {
   carregarRascunho,
   salvarRascunho,
@@ -45,7 +45,7 @@ export default function ReportForm() {
     numero_art: '', normas: DEFAULT_NORMAS, condicoes_ambiente: '',
     objetivo: DEFAULT_OBJECTIVE, metodologia: DEFAULT_METHODOLOGY,
     limitacoes: '', recomendacoes: DEFAULT_RECOMMENDATIONS,
-    limite_ohms: 10, measurements: [],
+    limite_ohms: 10, measurements: [], workflow_status: 'rascunho',
   });
   const [showClientDialog, setShowClientDialog] = useState(false);
   const [clientForm, setClientForm] = useState({ razao_social: '', cnpj: '', endereco: '', cidade: '', cep: '', bairro: '', fone: '' });
@@ -56,6 +56,7 @@ export default function ReportForm() {
   const [electricianForm, setElectricianForm] = useState({ nome: '', cpf: '', registro_profissional: '' });
   const [showInstrumentDialog, setShowInstrumentDialog] = useState(false);
   const [instrumentForm, setInstrumentForm] = useState({ marca_modelo: '', numero_serie: '', data_calibracao: '', especificacoes: '' });
+  const [currentUser, setCurrentUser] = useState(null);
 
   const handleClientCnpjLookup = async () => {
     const cnpj = (clientForm.cnpj || '').replace(/\D/g, '');
@@ -72,6 +73,7 @@ export default function ReportForm() {
   const draftKey = isNew ? 'report_draft' : `report_draft_${id}`;
 
   useEffect(() => {
+    base44.auth.me().then(setCurrentUser).catch(() => {});
     const draft = carregarRascunho(draftKey);
     if (draft) {
       setForm({
@@ -111,7 +113,21 @@ export default function ReportForm() {
 
   const set = (field, value) => setForm(f => ({ ...f, [field]: value }));
 
-  const handleSave = async () => {
+  const userRole = currentUser?.role;
+  const canEditFull = userRole === 'admin' || userRole === 'coordenador';
+  const isEletricistaMode = userRole === 'eletricista' && form.workflow_status === 'pendente_medicao';
+
+  useEffect(() => {
+    if (!userRole || loading) return;
+    if (userRole !== 'admin' && userRole !== 'coordenador') {
+      if (isNew) { navigate('/'); return; }
+      if (userRole === 'engenheiro' || (userRole === 'eletricista' && form.workflow_status !== 'pendente_medicao')) {
+        navigate(`/reports/${id}`);
+      }
+    }
+  }, [userRole, form.workflow_status, loading, isNew, id]);
+
+  const handleSave = async (newWorkflowStatus) => {
     if (!garantirConexao()) return;
     setSaving(true);
     try {
@@ -145,7 +161,8 @@ export default function ReportForm() {
         updatedMeasurements.every(m => (m.valor_medido ?? Infinity) <= lim) ? 'aprovado' : 'reprovado';
       const validade = form.data ? new Date(new Date(form.data).getTime() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : undefined;
       const condicoesStr = formatEnvironmentConditions(form.condicoes_ambiente);
-      const payload = { ...form, condicoes_ambiente: condicoesStr || undefined, measurements: updatedMeasurements, status, validade };
+      const workflow_status = newWorkflowStatus || form.workflow_status || 'rascunho';
+      const payload = { ...form, condicoes_ambiente: condicoesStr || undefined, measurements: updatedMeasurements, status, validade, workflow_status };
       if (isNew) {
         const created = await base44.entities.Report.create(payload);
         limparRascunho(draftKey);
@@ -161,7 +178,40 @@ export default function ReportForm() {
     setSaving(false);
   };
 
-  if (loading) return <p className="text-muted-foreground">Carregando...</p>;
+  if (loading || !currentUser) return <p className="text-muted-foreground">Carregando...</p>;
+
+  if (userRole && userRole !== 'admin' && userRole !== 'coordenador' && !isEletricistaMode) {
+    return <p className="text-muted-foreground">Redirecionando...</p>;
+  }
+
+  if (isEletricistaMode) {
+    return (
+      <div className="space-y-6 max-w-4xl mx-auto">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate(`/reports/${id}`)}><ArrowLeft className="h-5 w-5" /></Button>
+          <h1 className="text-2xl font-bold">Medições - {form.equipamento}</h1>
+        </div>
+        <Card>
+          <CardHeader><CardTitle>Informações do Laudo</CardTitle></CardHeader>
+          <CardContent className="space-y-1 text-sm">
+            <p><span className="font-medium text-muted-foreground">Equipamento:</span> {form.equipamento}</p>
+            <p><span className="font-medium text-muted-foreground">Tag:</span> {form.tag_equipamento || '-'}</p>
+            <p><span className="font-medium text-muted-foreground">Local:</span> {form.local || '-'}</p>
+            <p><span className="font-medium text-muted-foreground">Limite:</span> {form.limite_ohms || 10} Ω</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle>Medições</CardTitle></CardHeader>
+          <CardContent>
+            <MeasurementEditor measurements={form.measurements || []} limite={form.limite_ohms || 10} onChange={m => set('measurements', m)} />
+          </CardContent>
+        </Card>
+        <Button onClick={() => handleSave('pendente_revisao')} disabled={saving} size="lg">
+          <CheckCircle className="h-4 w-4 mr-2" /> {saving ? 'Enviando...' : 'Concluir Medições'}
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -277,10 +327,15 @@ export default function ReportForm() {
         </CardContent>
       </Card>
 
-      <div className="flex gap-3">
-        <Button onClick={handleSave} disabled={saving}>
+      <div className="flex gap-3 flex-wrap">
+        <Button onClick={() => handleSave()} disabled={saving}>
           <Save className="h-4 w-4 mr-2" /> {saving ? 'Salvando...' : 'Salvar Laudo'}
         </Button>
+        {canEditFull && (
+          <Button onClick={() => handleSave('pendente_medicao')} disabled={saving} variant="secondary">
+            <Send className="h-4 w-4 mr-2" /> {saving ? 'Enviando...' : 'Enviar para Eletricista'}
+          </Button>
+        )}
         <Button variant="outline" onClick={() => navigate(-1)}>Cancelar</Button>
       </div>
 

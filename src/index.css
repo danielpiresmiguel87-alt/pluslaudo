@@ -90,3 +90,15 @@
     @apply bg-background text-foreground font-body;
   }
 }
+
+@media print {
+  aside, header, button {
+    display: none !important;
+  }
+  .lg\:pl-64 {
+    padding-left: 0 !important;
+  }
+  main {
+    padding: 0 !important;
+  }
+}

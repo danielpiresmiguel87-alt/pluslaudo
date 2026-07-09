@@ -15,13 +15,18 @@ export default function Layout() {
   }, []);
 
   const isAdmin = user?.role === 'admin';
+  const canManage = user?.role === 'admin' || user?.role === 'coordenador';
   const navItems = [
     { to: '/', label: 'Laudos', icon: FileText, end: true },
-    { to: '/clients', label: 'Clientes', icon: Users },
-    { to: '/engineers', label: 'Engenheiros', icon: HardHat },
-    { to: '/electricians', label: 'Eletricistas', icon: Wrench },
-    { to: '/instruments', label: 'Instrumentos', icon: Gauge },
   ];
+  if (canManage) {
+    navItems.push(
+      { to: '/clients', label: 'Clientes', icon: Users },
+      { to: '/engineers', label: 'Engenheiros', icon: HardHat },
+      { to: '/electricians', label: 'Eletricistas', icon: Wrench },
+      { to: '/instruments', label: 'Instrumentos', icon: Gauge },
+    );
+  }
   if (isAdmin) navItems.push({ to: '/settings', label: 'Configurações', icon: Settings });
 
   const handleLogout = () => base44.auth.logout();

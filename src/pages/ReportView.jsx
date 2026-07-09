@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Pencil, Download, Printer } from 'lucide-react';
+import { ArrowLeft, Pencil, Download, Printer, CheckCircle } from 'lucide-react';
 import { generateReportPDF } from '@/utils/reportPdf';
 import { formatEnvironmentConditions } from '@/utils/environment';
 
@@ -14,8 +14,10 @@ export default function ReportView() {
   const [report, setReport] = useState(null);
   const [data, setData] = useState({});
   const [exporting, setExporting] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
+    base44.auth.me().then(setCurrentUser).catch(() => {});
     (async () => {
       const r = await base44.entities.Report.get(id);
       setReport(r);
@@ -46,6 +48,28 @@ export default function ReportView() {
 
   const lim = report.limite_ohms || 10;
   const measurements = report.measurements || [];
+  const userRole = currentUser?.role;
+  const canEdit = userRole === 'admin' || userRole === 'coordenador';
+  const isEletricista = userRole === 'eletricista';
+  const ws = report.workflow_status || 'rascunho';
+
+  const workflowLabel = {
+    rascunho: 'Rascunho',
+    pendente_medicao: 'Pendente Medição',
+    pendente_revisao: 'Pendente Revisão',
+    concluido: 'Concluído',
+  }[ws];
+  const workflowVariant = {
+    rascunho: 'secondary',
+    pendente_medicao: 'secondary',
+    pendente_revisao: 'default',
+    concluido: 'default',
+  }[ws];
+
+  const handleConcluir = async () => {
+    await base44.entities.Report.update(id, { workflow_status: 'concluido' });
+    setReport({ ...report, workflow_status: 'concluido' });
+  };
 
   const InfoRow = ({ label, value }) => (
     <div className="flex gap-2 text-sm py-1">
@@ -68,17 +92,26 @@ export default function ReportView() {
           <Button variant="ghost" size="icon" onClick={() => navigate('/')}><ArrowLeft className="h-5 w-5" /></Button>
           <h1 className="text-2xl font-bold">Laudo - {report.equipamento}</h1>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => navigate(`/reports/${id}/edit`)}><Pencil className="h-4 w-4 mr-2" />Editar</Button>
+        <div className="flex gap-2 flex-wrap">
+          {canEdit && (
+            <Button variant="outline" onClick={() => navigate(`/reports/${id}/edit`)}><Pencil className="h-4 w-4 mr-2" />Editar</Button>
+          )}
+          {isEletricista && ws === 'pendente_medicao' && (
+            <Button onClick={() => navigate(`/reports/${id}/edit`)}><Pencil className="h-4 w-4 mr-2" />Adicionar Medições</Button>
+          )}
+          {canEdit && ws === 'pendente_revisao' && (
+            <Button onClick={handleConcluir}><CheckCircle className="h-4 w-4 mr-2" />Concluir Laudo</Button>
+          )}
           <Button variant="outline" onClick={() => window.print()}><Printer className="h-4 w-4 mr-2" />Imprimir</Button>
           <Button onClick={handlePdf} disabled={exporting}><Download className="h-4 w-4 mr-2" />{exporting ? 'Gerando...' : 'Exportar PDF'}</Button>
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <Badge variant={report.status === 'aprovado' ? 'default' : report.status === 'reprovado' ? 'destructive' : 'secondary'} className="text-sm">
           {report.status === 'aprovado' ? 'Aprovado' : report.status === 'reprovado' ? 'Reprovado' : 'Rascunho'}
         </Badge>
+        <Badge variant={workflowVariant} className="text-sm">{workflowLabel}</Badge>
         <span className="text-sm text-muted-foreground">Limite: {lim} Ω</span>
       </div>
 

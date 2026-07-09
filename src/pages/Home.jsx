@@ -4,9 +4,28 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, FileText, CheckCircle, XCircle, AlertTriangle, CalendarClock } from 'lucide-react';
+import { Plus, FileText, CheckCircle, XCircle, AlertTriangle, CalendarClock, ClipboardList, Clock } from 'lucide-react';
 
 const DAY = 24 * 60 * 60 * 1000;
+
+const WORKFLOW_LABELS = {
+  rascunho: 'Rascunho',
+  pendente_medicao: 'Pendente Medição',
+  pendente_revisao: 'Pendente Revisão',
+  concluido: 'Concluído',
+};
+const WORKFLOW_VARIANTS = {
+  rascunho: 'secondary',
+  pendente_medicao: 'secondary',
+  pendente_revisao: 'default',
+  concluido: 'default',
+};
+const WORKFLOW_ICONS = {
+  rascunho: FileText,
+  pendente_medicao: ClipboardList,
+  pendente_revisao: Clock,
+  concluido: CheckCircle,
+};
 
 function getValidadeInfo(r) {
   if (!r.validade || r.status !== 'aprovado') return null;
@@ -24,32 +43,52 @@ function getValidadeInfo(r) {
 export default function Home() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
+    base44.auth.me().then(setCurrentUser).catch(() => {});
     base44.entities.Report.list('-created_date').then(res => { setReports(res); setLoading(false); });
   }, []);
 
-  const aprovados = reports.filter(r => r.status === 'aprovado').length;
-  const reprovados = reports.filter(r => r.status === 'reprovado').length;
+  const userRole = currentUser?.role;
+  const canCreate = userRole === 'admin' || userRole === 'coordenador';
+  const isEletricista = userRole === 'eletricista';
+  const isEngenheiro = userRole === 'engenheiro';
 
-  const vencidos = reports.filter(r => { const v = getValidadeInfo(r); return v && v.days < 0; });
-  const vencendo = reports.filter(r => { const v = getValidadeInfo(r); return v && v.days >= 0 && v.days <= 60; });
+  const visibleReports = reports.filter(r => {
+    if (!userRole) return false;
+    if (userRole === 'admin' || userRole === 'coordenador') return true;
+    if (userRole === 'eletricista') return r.workflow_status === 'pendente_medicao';
+    if (userRole === 'engenheiro') return r.workflow_status === 'pendente_revisao' || r.workflow_status === 'concluido';
+    return false;
+  });
+
+  const aprovados = visibleReports.filter(r => r.status === 'aprovado').length;
+  const reprovados = visibleReports.filter(r => r.status === 'reprovado').length;
+
+  const vencidos = visibleReports.filter(r => { const v = getValidadeInfo(r); return v && v.days < 0; });
+  const vencendo = visibleReports.filter(r => { const v = getValidadeInfo(r); return v && v.days >= 0 && v.days <= 60; });
   const aVencer = [...vencidos, ...vencendo].sort((a, b) => getValidadeInfo(a).days - getValidadeInfo(b).days);
+
+  const title = isEletricista ? 'Medições Pendentes' : isEngenheiro ? 'Laudos para Revisão' : 'Laudos';
+  const emptyMsg = isEletricista ? 'Nenhuma medição pendente.' : isEngenheiro ? 'Nenhum laudo para revisão.' : 'Nenhum laudo cadastrado. Clique em "Novo Laudo" para começar.';
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Laudos</h1>
-        <Button onClick={() => navigate('/reports/new')}>
-          <Plus className="h-4 w-4 mr-2" /> Novo Laudo
-        </Button>
+        <h1 className="text-2xl font-bold">{title}</h1>
+        {canCreate && (
+          <Button onClick={() => navigate('/reports/new')}>
+            <Plus className="h-4 w-4 mr-2" /> Novo Laudo
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-3 gap-3">
         <Card><CardContent className="pt-4 pb-4 flex items-center gap-3">
           <FileText className="h-8 w-8 text-blue-500" />
-          <div><p className="text-2xl font-bold">{reports.length}</p><p className="text-xs text-muted-foreground">Total</p></div>
+          <div><p className="text-2xl font-bold">{visibleReports.length}</p><p className="text-xs text-muted-foreground">Total</p></div>
         </CardContent></Card>
         <Card><CardContent className="pt-4 pb-4 flex items-center gap-3">
           <CheckCircle className="h-8 w-8 text-green-500" />
@@ -61,7 +100,7 @@ export default function Home() {
         </CardContent></Card>
       </div>
 
-      {aVencer.length > 0 && (
+      {canCreate && aVencer.length > 0 && (
         <Card className="border-orange-200 bg-orange-50">
           <CardContent className="pt-4">
             <div className="flex items-center gap-2 mb-3">
@@ -92,16 +131,18 @@ export default function Home() {
         </Card>
       )}
 
-      {loading ? (
+      {loading || !currentUser ? (
         <p className="text-muted-foreground">Carregando...</p>
-      ) : reports.length === 0 ? (
+      ) : visibleReports.length === 0 ? (
         <Card><CardContent className="py-12 text-center text-muted-foreground">
-          Nenhum laudo cadastrado. Clique em "Novo Laudo" para começar.
+          {emptyMsg}
         </CardContent></Card>
       ) : (
         <div className="space-y-2">
-          {reports.map(r => {
+          {visibleReports.map(r => {
             const v = getValidadeInfo(r);
+            const ws = r.workflow_status || 'rascunho';
+            const WfIcon = WORKFLOW_ICONS[ws] || FileText;
             return (
               <Card key={r.id} className="cursor-pointer hover:shadow-md transition" onClick={() => navigate(`/reports/${r.id}`)}>
                 <CardContent className="pt-4 pb-4 flex items-center justify-between">
@@ -111,8 +152,12 @@ export default function Home() {
                       {r.local}{r.data ? ` - ${new Date(r.data).toLocaleDateString('pt-BR')}` : ''}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {v && <Badge variant={v.variant} className={v.color}>{v.label}</Badge>}
+                  <div className="flex items-center gap-2 flex-wrap justify-end">
+                    {canCreate && v && <Badge variant={v.variant} className={v.color}>{v.label}</Badge>}
+                    <Badge variant={WORKFLOW_VARIANTS[ws]} className="text-xs">
+                      <WfIcon className="h-3 w-3 mr-1" />
+                      {WORKFLOW_LABELS[ws]}
+                    </Badge>
                     <Badge variant={r.status === 'aprovado' ? 'default' : r.status === 'reprovado' ? 'destructive' : 'secondary'}>
                       {r.status === 'aprovado' ? 'Aprovado' : r.status === 'reprovado' ? 'Reprovado' : 'Rascunho'}
                     </Badge>
