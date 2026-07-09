@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Pencil, Download, Printer, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Pencil, Download, Printer, CheckCircle, Upload, FileText, Save } from 'lucide-react';
 import { generateReportPDF } from '@/utils/reportPdf';
 import { formatEnvironmentConditions } from '@/utils/environment';
 
@@ -15,6 +16,11 @@ export default function ReportView() {
   const [data, setData] = useState({});
   const [exporting, setExporting] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [artEditing, setArtEditing] = useState(false);
+  const [artNumero, setArtNumero] = useState('');
+  const [artDocUrl, setArtDocUrl] = useState('');
+  const [savingArt, setSavingArt] = useState(false);
+  const [uploadingArt, setUploadingArt] = useState(false);
 
   useEffect(() => {
     base44.auth.me().then(setCurrentUser).catch(() => {});
@@ -70,6 +76,39 @@ export default function ReportView() {
     await base44.entities.Report.update(id, { workflow_status: 'concluido' });
     setReport({ ...report, workflow_status: 'concluido' });
   };
+
+  const startArtEdit = () => {
+    setArtNumero(report.numero_art || '');
+    setArtDocUrl(report.art_documento_url || '');
+    setArtEditing(true);
+  };
+
+  const handleArtUpload = async (file) => {
+    if (!file) return;
+    setUploadingArt(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setArtDocUrl(file_url);
+    } catch (e) {
+      alert('Erro ao enviar documento: ' + e.message);
+    }
+    setUploadingArt(false);
+  };
+
+  const handleArtSave = async () => {
+    setSavingArt(true);
+    try {
+      await base44.entities.Report.update(id, { numero_art: artNumero, art_documento_url: artDocUrl });
+      setReport({ ...report, numero_art: artNumero, art_documento_url: artDocUrl });
+      setArtEditing(false);
+    } catch (e) {
+      alert('Erro ao salvar: ' + e.message);
+    }
+    setSavingArt(false);
+  };
+
+  const isEngenheiro = userRole === 'engenheiro';
+  const canManageArt = isEngenheiro || canEdit;
 
   const InfoRow = ({ label, value }) => (
     <div className="flex gap-2 text-sm py-1">
@@ -168,7 +207,61 @@ export default function ReportView() {
       <Section title="Dados Técnicos">
         <InfoRow label="Equipamento" value={report.equipamento} />
         <InfoRow label="Tag do Equipamento" value={report.tag_equipamento} />
-        <InfoRow label="Número da ART" value={report.numero_art} />
+
+        <div className="border-t my-3 pt-3">
+          <div className="flex items-center justify-between mb-2">
+            <span className="font-medium text-muted-foreground text-sm">Anotação de Responsabilidade Técnica (ART)</span>
+            {canManageArt && !artEditing && (
+              <Button variant="outline" size="sm" onClick={startArtEdit}>
+                <Pencil className="h-3 w-3 mr-1" /> {report.numero_art || report.art_documento_url ? 'Editar' : 'Preencher'}
+              </Button>
+            )}
+          </div>
+          {!artEditing ? (
+            <>
+              <InfoRow label="Número da ART" value={report.numero_art} />
+              {report.art_documento_url ? (
+                <div className="flex items-center gap-2 mt-1">
+                  <FileText className="h-4 w-4 text-blue-500" />
+                  <a href={report.art_documento_url} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline">
+                    Visualizar documento da ART
+                  </a>
+                </div>
+              ) : (
+                <InfoRow label="Documento" value="Não anexado" />
+              )}
+            </>
+          ) : (
+            <div className="space-y-3 mt-2">
+              <div>
+                <span className="text-xs text-muted-foreground">Número da ART</span>
+                <Input value={artNumero} onChange={e => setArtNumero(e.target.value)} placeholder="Ex: 2024/123456" />
+              </div>
+              <div>
+                <span className="text-xs text-muted-foreground">Documento da ART (PDF)</span>
+                {artDocUrl ? (
+                  <div className="flex items-center gap-2 mt-1">
+                    <FileText className="h-4 w-4 text-green-600" />
+                    <a href={artDocUrl} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline">Documento anexado</a>
+                    <Button variant="ghost" size="sm" onClick={() => setArtDocUrl('')}>Remover</Button>
+                  </div>
+                ) : (
+                  <Button variant="outline" size="sm" disabled={uploadingArt} onClick={() => document.getElementById('art-upload').click()}>
+                    <Upload className="h-4 w-4 mr-1" /> {uploadingArt ? 'Enviando...' : 'Anexar ART'}
+                  </Button>
+                )}
+                <input id="art-upload" type="file" accept="application/pdf,image/*" className="hidden"
+                  onChange={e => { const file = e.target.files?.[0]; if (file) handleArtUpload(file); e.target.value = ''; }} />
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" onClick={handleArtSave} disabled={savingArt}>
+                  <Save className="h-3 w-3 mr-1" /> {savingArt ? 'Salvando...' : 'Salvar ART'}
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setArtEditing(false)}>Cancelar</Button>
+              </div>
+            </div>
+          )}
+        </div>
         <div className="mt-2">
           <span className="font-medium text-muted-foreground text-sm">Normas e Referências:</span>
           <p className="text-sm whitespace-pre-wrap mt-1">{report.normas}</p>
