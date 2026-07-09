@@ -84,7 +84,8 @@ export async function generateReportPDF(report, data) {
   };
 
   const section = (num, title) => {
-    ensure(16);
+    // ensure header + at least some body text fit together (keep-with-next)
+    ensure(36);
     if (y > M) y += 4;
     doc.setFillColor(...COLOR_PRIMARY);
     doc.rect(M, y - 5, W - 2 * M, 10, 'F');
@@ -114,16 +115,16 @@ export async function generateReportPDF(report, data) {
 
   const para = (text, opts = {}) => {
     if (!text) return;
-    const size = opts.size || 10.5;
+    const size = opts.size || 11.5;
     const justify = opts.justify !== false;
     doc.setFontSize(size);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(0, 0, 0);
     const lines = doc.splitTextToSize(text, W - 2 * M);
     for (const l of lines) {
-      ensure(size * 0.45 + 3);
+      ensure(size * 0.42 + 3.5);
       doc.text(l, M, y, { maxWidth: W - 2 * M, align: justify ? 'justify' : 'left' });
-      y += size * 0.45 + 3;
+      y += size * 0.42 + 3.5;
     }
     y += 3;
   };
@@ -481,13 +482,20 @@ export async function generateReportPDF(report, data) {
         addImg(doc, img, fx, y, actualW, ph);
         y += ph + 3;
 
-        // Legenda ABAIXO da foto (fora da borda)
-        doc.setFontSize(9);
-        doc.setFont(undefined, 'normal');
-        doc.setTextColor(...COLOR_GRAY);
-        doc.text(`Foto ${m.fotos.indexOf(fotoUrl) + 1} - Medição ${i + 1}`, W / 2, y, { align: 'center' });
+        // Legenda ABAIXO da foto com linha separadora e estilo destacado
+        doc.setDrawColor(...COLOR_ACCENT);
+        doc.setLineWidth(0.3);
+        doc.line(fx, y, fx + actualW, y);
+        doc.setFontSize(9.5);
+        doc.setFont(undefined, 'italic');
+        doc.setTextColor(...COLOR_PRIMARY);
+        const fotoNum = m.fotos.indexOf(fotoUrl) + 1;
+        const legenda = m.descricao
+          ? `Foto ${fotoNum} — Medição ${i + 1}: ${m.descricao}`
+          : `Foto ${fotoNum} — Medição ${i + 1}`;
+        doc.text(legenda, W / 2, y + 4.5, { align: 'center' });
         doc.setTextColor(0, 0, 0);
-        y += 8;
+        y += 10;
       }
       y += 4;
     }
