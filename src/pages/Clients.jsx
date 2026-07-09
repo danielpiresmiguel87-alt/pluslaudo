@@ -7,7 +7,7 @@ export default function Clients() {
       title="Clientes"
       fields={[
         { name: 'razao_social', label: 'Razão Social' },
-        { name: 'cnpj', label: 'CNPJ' },
+        { name: 'cnpj', label: 'CNPJ', lookup: 'cnpj' },
         { name: 'endereco', label: 'Endereço' },
         { name: 'cidade', label: 'Cidade' },
         { name: 'cep', label: 'CEP' },

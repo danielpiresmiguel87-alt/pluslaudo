@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import MeasurementEditor from '@/components/report/MeasurementEditor';
 import EnvironmentConditions from '@/components/report/EnvironmentConditions';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ArrowLeft, Save, Plus } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Search } from 'lucide-react';
 import {
   carregarRascunho,
   salvarRascunho,
@@ -48,6 +48,19 @@ export default function ReportForm() {
   });
   const [showClientDialog, setShowClientDialog] = useState(false);
   const [clientForm, setClientForm] = useState({ razao_social: '', cnpj: '', endereco: '', cidade: '', cep: '', bairro: '', fone: '' });
+  const [clientLookingUp, setClientLookingUp] = useState(false);
+
+  const handleClientCnpjLookup = async () => {
+    const cnpj = (clientForm.cnpj || '').replace(/\D/g, '');
+    if (cnpj.length !== 14) { alert('CNPJ inválido. Deve conter 14 dígitos.'); return; }
+    setClientLookingUp(true);
+    try {
+      const res = await base44.functions.invoke('consultarCnpj', { cnpj });
+      if (res.data.error) { alert(res.data.error); }
+      else { setClientForm(s => ({ ...s, ...res.data })); }
+    } catch (e) { alert('Erro ao consultar CNPJ: ' + e.message); }
+    setClientLookingUp(false);
+  };
 
   const draftKey = isNew ? 'report_draft' : `report_draft_${id}`;
 
@@ -258,7 +271,15 @@ export default function ReportForm() {
               <Label>Razão Social *</Label>
               <Input value={clientForm.razao_social} onChange={e => setClientForm(s => ({ ...s, razao_social: e.target.value }))} />
             </div>
-            <div><Label>CNPJ</Label><Input value={clientForm.cnpj} onChange={e => setClientForm(s => ({ ...s, cnpj: e.target.value }))} /></div>
+            <div>
+              <Label>CNPJ</Label>
+              <div className="flex gap-2">
+                <Input value={clientForm.cnpj} onChange={e => setClientForm(s => ({ ...s, cnpj: e.target.value }))} className="flex-1" placeholder="00.000.000/0000-00" />
+                <Button type="button" variant="outline" size="sm" onClick={handleClientCnpjLookup} disabled={clientLookingUp}>
+                  <Search className="h-4 w-4" /> {clientLookingUp ? '...' : 'Buscar'}
+                </Button>
+              </div>
+            </div>
             <div><Label>Fone</Label><Input value={clientForm.fone} onChange={e => setClientForm(s => ({ ...s, fone: e.target.value }))} /></div>
             <div className="md:col-span-2"><Label>Endereço</Label><Input value={clientForm.endereco} onChange={e => setClientForm(s => ({ ...s, endereco: e.target.value }))} /></div>
             <div><Label>Cidade</Label><Input value={clientForm.cidade} onChange={e => setClientForm(s => ({ ...s, cidade: e.target.value }))} /></div>

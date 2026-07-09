@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { Plus, Pencil, Trash2, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Search } from 'lucide-react';
 
 export default function EntityCrudPage({ entityName, title, fields }) {
   const [items, setItems] = useState([]);
@@ -13,6 +13,7 @@ export default function EntityCrudPage({ entityName, title, fields }) {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({});
+  const [lookingUp, setLookingUp] = useState(false);
 
   const emptyForm = () => fields.reduce((acc, f) => ({ ...acc, [f.name]: '' }), {});
 
@@ -48,6 +49,18 @@ export default function EntityCrudPage({ entityName, title, fields }) {
     load();
   };
 
+  const handleCnpjLookup = async () => {
+    const cnpj = (form.cnpj || '').replace(/\D/g, '');
+    if (cnpj.length !== 14) { alert('CNPJ inválido. Deve conter 14 dígitos.'); return; }
+    setLookingUp(true);
+    try {
+      const res = await base44.functions.invoke('consultarCnpj', { cnpj });
+      if (res.data.error) { alert(res.data.error); }
+      else { setForm(s => ({ ...s, ...res.data })); }
+    } catch (e) { alert('Erro ao consultar CNPJ: ' + e.message); }
+    setLookingUp(false);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -66,6 +79,13 @@ export default function EntityCrudPage({ entityName, title, fields }) {
                 <Label>{f.label}</Label>
                 {f.type === 'textarea' ? (
                   <Textarea value={form[f.name] || ''} onChange={e => setForm(s => ({ ...s, [f.name]: e.target.value }))} rows={3} />
+                ) : f.lookup === 'cnpj' ? (
+                  <div className="flex gap-2">
+                    <Input type={f.type || 'text'} value={form[f.name] || ''} onChange={e => setForm(s => ({ ...s, [f.name]: e.target.value }))} className="flex-1" placeholder="00.000.000/0000-00" />
+                    <Button type="button" variant="outline" size="sm" onClick={handleCnpjLookup} disabled={lookingUp}>
+                      <Search className="h-4 w-4" /> {lookingUp ? '...' : 'Buscar'}
+                    </Button>
+                  </div>
                 ) : (
                   <Input type={f.type || 'text'} value={form[f.name] || ''} onChange={e => setForm(s => ({ ...s, [f.name]: e.target.value }))} />
                 )}
