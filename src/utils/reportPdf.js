@@ -123,6 +123,10 @@ export async function generateReportPDF(report, data) {
     const lines = doc.splitTextToSize(text, W - 2 * M);
     for (const l of lines) {
       ensure(size * 0.42 + 3.5);
+      // ensure() pode chamar drawFooter() que altera fonte/tamanho — redefinir
+      doc.setFontSize(size);
+      doc.setFont(undefined, 'normal');
+      doc.setTextColor(0, 0, 0);
       doc.text(l, M, y, { align: justify ? 'justify' : 'left' });
       y += size * 0.42 + 3.5;
     }
