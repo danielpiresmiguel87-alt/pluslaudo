@@ -1,4 +1,5 @@
 import { jsPDF } from 'jspdf';
+import { formatEnvironmentConditions } from '@/utils/environment';
 
 function loadImage(url) {
   return new Promise((resolve) => {
@@ -111,7 +112,7 @@ export async function generateReportPDF(report, data) {
   para(report.normas);
 
   section('3. CONDIÇÕES DO AMBIENTE E CLIMÁTICAS');
-  para(report.condicoes_ambiente);
+  para(formatEnvironmentConditions(report.condicoes_ambiente));
 
   section('4. OBJETIVO');
   para(report.objetivo);

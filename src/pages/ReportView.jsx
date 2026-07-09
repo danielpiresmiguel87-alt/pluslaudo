@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Pencil, Download } from 'lucide-react';
 import { generateReportPDF } from '@/utils/reportPdf';
+import { formatEnvironmentConditions } from '@/utils/environment';
 
 export default function ReportView() {
   const { id } = useParams();
@@ -135,7 +136,7 @@ export default function ReportView() {
         </div>
         <div className="mt-2">
           <span className="font-medium text-muted-foreground text-sm">Condições do Ambiente:</span>
-          <p className="text-sm whitespace-pre-wrap mt-1">{report.condicoes_ambiente}</p>
+          <p className="text-sm whitespace-pre-wrap mt-1">{formatEnvironmentConditions(report.condicoes_ambiente)}</p>
         </div>
         {report.limitacoes && (
           <div className="mt-2">

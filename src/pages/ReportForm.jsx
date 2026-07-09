@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import MeasurementEditor from '@/components/report/MeasurementEditor';
+import EnvironmentConditions from '@/components/report/EnvironmentConditions';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ArrowLeft, Save, Plus } from 'lucide-react';
 
@@ -155,7 +156,8 @@ export default function ReportForm() {
         <CardContent className="space-y-4">
           <div><Label>Número da ART</Label><Input value={form.numero_art || ''} onChange={e => set('numero_art', e.target.value)} /></div>
           <div><Label>Normas e Referências</Label><Textarea value={form.normas || ''} onChange={e => set('normas', e.target.value)} rows={2} /></div>
-          <div><Label>Condições do Ambiente e Clima</Label><Textarea value={form.condicoes_ambiente || ''} onChange={e => set('condicoes_ambiente', e.target.value)} rows={3} placeholder="Período do dia, tempo, temperatura, umidade, condições do solo..." /></div>
+          <div><Label className="mb-1 block">Condições do Ambiente e Clima</Label>
+          <EnvironmentConditions value={form.condicoes_ambiente} onChange={obj => set('condicoes_ambiente', obj)} /></div>
           <div><Label>Limitações do Ensaio</Label><Textarea value={form.limitacoes || ''} onChange={e => set('limitacoes', e.target.value)} rows={3} placeholder="Interferências, condições que afetaram a medição..." /></div>
         </CardContent>
       </Card>
