@@ -13,17 +13,10 @@ export default function Layout() {
 
   useEffect(() => {
     base44.entities.Company.list().then(res => { if (res[0]) setCompany(res[0]); });
+    base44.functions.invoke('getUserRole', {})
+      .then(res => setUserRole(res.data.role))
+      .catch(() => {});
   }, []);
-
-  useEffect(() => {
-    if (user?.role) {
-      setUserRole(user.role);
-    } else if (user?.id) {
-      base44.entities.User.get(user.id)
-        .then(u => setUserRole(u.role))
-        .catch(() => {});
-    }
-  }, [user]);
 
   const isAdmin = userRole === 'admin';
   const canManage = userRole === 'admin' || userRole === 'coordenador';
