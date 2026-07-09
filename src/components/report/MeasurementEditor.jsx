@@ -65,8 +65,8 @@ export default function MeasurementEditor({ measurements, limite, onChange }) {
                     {approved ? 'Aprovado' : 'Reprovado'}
                   </Badge>
                 )}
-                <Button variant="ghost" size="icon" onClick={() => removeMeasurement(i)}>
-                  <Trash2 className="h-4 w-4" />
+                <Button variant="destructive" size="sm" onClick={() => removeMeasurement(i)}>
+                  <Trash2 className="h-4 w-4" /> Remover
                 </Button>
               </div>
             </div>
