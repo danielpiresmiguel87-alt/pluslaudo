@@ -131,6 +131,7 @@ export async function generateReportPDF(report, data) {
 
   section('8. LEVANTAMENTO DOS DADOS');
   kv('Equipamento', report.equipamento);
+  kv('Tag do Equipamento', report.tag_equipamento);
   kv('Limite de Referência', `${lim} Ohms`);
 
   for (let i = 0; i < measurements.length; i++) {

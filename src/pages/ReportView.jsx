@@ -129,6 +129,8 @@ export default function ReportView() {
       </Section>
 
       <Section title="Dados Técnicos">
+        <InfoRow label="Equipamento" value={report.equipamento} />
+        <InfoRow label="Tag do Equipamento" value={report.tag_equipamento} />
         <InfoRow label="Número da ART" value={report.numero_art} />
         <div className="mt-2">
           <span className="font-medium text-muted-foreground text-sm">Normas e Referências:</span>

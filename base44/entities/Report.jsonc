@@ -5,6 +5,9 @@
     "equipamento": {
       "type": "string"
     },
+    "tag_equipamento": {
+      "type": "string"
+    },
     "local": {
       "type": "string"
     },
