@@ -353,6 +353,17 @@ export async function generateReportPDF(report, data) {
     const colX = [M, M + 8, M + 86, M + 114, M + 142];
     const colLabels = ['Nº', 'Descrição / Local', 'Valor (Ohms)', 'Limite (Ohms)', 'Status'];
 
+    // Função para desenhar bordas de uma seção da tabela (linha por linha, evita travessia de página)
+    const drawTableBorders = (top, bottom) => {
+      doc.setDrawColor(...COLOR_ACCENT);
+      doc.setLineWidth(0.3);
+      doc.rect(M, top, W - 2 * M, bottom - top);
+      doc.setLineWidth(0.2);
+      for (let c = 1; c < colX.length; c++) {
+        doc.line(colX[c], top, colX[c], bottom);
+      }
+    };
+
     // Header da tabela
     doc.setFillColor(...COLOR_PRIMARY);
     doc.rect(M, y - 5, W - 2 * M, 9, 'F');
@@ -367,7 +378,7 @@ export async function generateReportPDF(report, data) {
     doc.setTextColor(0, 0, 0);
     y += 9;
 
-    const tableTop = y - 5;
+    let pageTop = y - 5;  // topo da tabela na página atual
     for (let i = 0; i < measurements.length; i++) {
       const m = measurements[i];
       const approved = (m.valor_medido ?? Infinity) <= lim;
@@ -377,7 +388,29 @@ export async function generateReportPDF(report, data) {
       const descLines = doc.splitTextToSize(m.descricao || '-', colW[1] - 4);
       const rowH = Math.max(8, 5.5 * descLines.length + 3);
 
-      ensure(rowH + 5);
+      // Se precisar de quebra de página, fecha a borda da página atual antes
+      if (y + rowH > H - 20) {
+        drawTableBorders(pageTop, y);
+        drawFooter();
+        doc.addPage();
+        pageNum++;
+        y = M;
+        // Repete o header da tabela na nova página
+        doc.setFillColor(...COLOR_PRIMARY);
+        doc.rect(M, y - 5, W - 2 * M, 9, 'F');
+        doc.setFontSize(9);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(255, 255, 255);
+        doc.text(colLabels[0], colX[0] + colW[0] / 2, y + 1, { align: 'center' });
+        doc.text(colLabels[1], colX[1] + 2, y + 1);
+        doc.text(colLabels[2], colX[2] + colW[2] / 2, y + 1, { align: 'center' });
+        doc.text(colLabels[3], colX[3] + colW[3] / 2, y + 1, { align: 'center' });
+        doc.text(colLabels[4], colX[4] + colW[4] / 2, y + 1, { align: 'center' });
+        doc.setTextColor(0, 0, 0);
+        y += 9;
+        pageTop = y - 5;
+      }
+
       // Zebra striping PRIMEIRO (antes do texto)
       if (i % 2 === 0) {
         doc.setFillColor(248, 250, 252);
@@ -408,15 +441,8 @@ export async function generateReportPDF(report, data) {
       y += rowH;
     }
 
-    // Borda da tabela
-    doc.setDrawColor(...COLOR_ACCENT);
-    doc.setLineWidth(0.3);
-    doc.rect(M, tableTop, W - 2 * M, y - tableTop);
-    // Linhas verticais separadoras
-    doc.setLineWidth(0.2);
-    for (let c = 1; c < colX.length; c++) {
-      doc.line(colX[c], tableTop, colX[c], y);
-    }
+    // Fecha a borda da última página da tabela
+    drawTableBorders(pageTop, y);
 
     y += 4;
 
@@ -503,6 +529,8 @@ export async function generateReportPDF(report, data) {
         if (col === 0) {
           ensure(rowMaxH + 4);
           rowStartY = y;
+        } else {
+          ensure(cellH + 4);
         }
 
         const cx = M + col * (cellW + gap) + (cellW - iw) / 2;
