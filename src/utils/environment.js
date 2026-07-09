@@ -19,6 +19,5 @@ function formatObj(v) {
   if (v.tempo) parts.push(`Tempo: ${v.tempo}`);
   if (v.temperatura) parts.push(`Temperatura: ${v.temperatura}°C`);
   if (v.umidade) parts.push(`Umidade: ${v.umidade}%`);
-  if (v.solo) parts.push(`Condições do solo: ${v.solo}`);
   return parts.join(' | ');
 }

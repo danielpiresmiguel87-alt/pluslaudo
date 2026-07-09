@@ -2,7 +2,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-const DEFAULTS = { periodo: '', tempo: '', temperatura: '', umidade: '', solo: '' };
+const DEFAULTS = { periodo: '', tempo: '', temperatura: '', umidade: '' };
 
 export default function EnvironmentConditions({ value, onChange }) {
   const v = { ...DEFAULTS, ...(typeof value === 'string' ? safeParse(value) : value) };
@@ -34,10 +34,6 @@ export default function EnvironmentConditions({ value, onChange }) {
       <div>
         <Label>Umidade (%)</Label>
         <Input type="number" value={v.umidade || ''} onChange={e => update('umidade', e.target.value)} placeholder="Ex: 65" />
-      </div>
-      <div className="md:col-span-2">
-        <Label>Condições do Solo</Label>
-        <Input value={v.solo || ''} onChange={e => update('solo', e.target.value)} placeholder="Úmido, seco, resistivo..." />
       </div>
     </div>
   );
