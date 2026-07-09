@@ -540,45 +540,47 @@ export async function generateReportPDF(report, data) {
   section(hasMeas ? (report.limitacoes ? 16 : 15) : (report.limitacoes ? 15 : 14), 'RECOMENDAÇÕES FINAIS');
   para(report.recomendacoes);
 
-  // ── ASSINATURAS ──
+  // ── ASSINATURAS ── (engenheiro e cliente lado a lado)
   ensure(55);
   y += 12;
   doc.setDrawColor(80);
   doc.setLineWidth(0.4);
   const sigY = y + 20;
-  doc.line(M, sigY, M + 75, sigY);
+  const sigW = (W - 2 * M - 20) / 2;
+  const engX = M;
+  const cliX = M + sigW + 20;
+
+  // Linha de assinatura do engenheiro
+  doc.line(engX, sigY, engX + sigW, sigY);
   doc.setFontSize(10);
   doc.setFont(undefined, 'bold');
   doc.setTextColor(...COLOR_PRIMARY);
-  doc.text(engineer?.nome || '_______________________________', M, sigY + 5);
+  doc.text(engineer?.nome || '_______________________________', engX, sigY + 5);
   doc.setFont(undefined, 'normal');
   doc.setFontSize(9);
   doc.setTextColor(...COLOR_GRAY);
-  doc.text('Engenheiro Eletricista Responsável', M, sigY + 10);
+  doc.text('Engenheiro Eletricista Responsável', engX, sigY + 10);
   if (engineer?.crea_sc) {
-    doc.text(`CREA-SC: ${engineer.crea_sc}`, M, sigY + 15);
+    doc.text(`CREA-SC: ${engineer.crea_sc}`, engX, sigY + 15);
   }
   doc.setTextColor(0, 0, 0);
 
-  // Assinatura do cliente/contratante
-  y = sigY + 24;
-  ensure(30);
-  doc.setDrawColor(80);
-  doc.setLineWidth(0.4);
-  const clientSigY = y + 20;
-  doc.line((W / 2) - 37, clientSigY, (W / 2) + 37, clientSigY);
+  // Linha de assinatura do cliente
+  doc.line(cliX, sigY, cliX + sigW, sigY);
   doc.setFontSize(10);
   doc.setFont(undefined, 'bold');
   doc.setTextColor(...COLOR_PRIMARY);
-  doc.text(client?.razao_social || '_______________________________', W / 2, clientSigY + 5, { align: 'center' });
+  doc.text(client?.razao_social || '_______________________________', cliX, sigY + 5);
   doc.setFont(undefined, 'normal');
   doc.setFontSize(9);
   doc.setTextColor(...COLOR_GRAY);
-  doc.text('Cliente / Contratante', W / 2, clientSigY + 10, { align: 'center' });
+  doc.text('Cliente / Contratante', cliX, sigY + 10);
   if (client?.cnpj) {
-    doc.text(`CNPJ: ${client.cnpj}`, W / 2, clientSigY + 15, { align: 'center' });
+    doc.text(`CNPJ: ${client.cnpj}`, cliX, sigY + 15);
   }
   doc.setTextColor(0, 0, 0);
+
+  y = sigY + 24;
 
   // Rodapé final
   drawFooter();
