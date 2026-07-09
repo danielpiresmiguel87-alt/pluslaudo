@@ -123,7 +123,7 @@ export async function generateReportPDF(report, data) {
     const lines = doc.splitTextToSize(text, W - 2 * M);
     for (const l of lines) {
       ensure(size * 0.42 + 3.5);
-      doc.text(l, M, y, { maxWidth: W - 2 * M, align: justify ? 'justify' : 'left' });
+      doc.text(l, M, y, { align: justify ? 'justify' : 'left' });
       y += size * 0.42 + 3.5;
     }
     y += 3;
