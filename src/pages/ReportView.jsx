@@ -212,8 +212,8 @@ export default function ReportView() {
           {isEletricista && ws === 'pendente_medicao' && (
             <Button onClick={() => navigate(`/reports/${id}/edit`)}><Pencil className="h-4 w-4 mr-2" />Adicionar Medições</Button>
           )}
-          {canEdit && ws === 'pendente_revisao' && (
-            <Button onClick={handleConcluir}><CheckCircle className="h-4 w-4 mr-2" />Concluir Laudo</Button>
+          {(canEdit || isEngenheiro) && ws === 'pendente_revisao' && (
+            <Button onClick={handleConcluir}><CheckCircle className="h-4 w-4 mr-2" />Concluir Revisão</Button>
           )}
           {canEdit && (
             <Button variant="outline" onClick={handleSendForSignature} disabled={sendingLink}>
