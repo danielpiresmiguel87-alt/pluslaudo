@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -16,9 +16,20 @@ import Engineers from '@/pages/Engineers';
 import Electricians from '@/pages/Electricians';
 import Instruments from '@/pages/Instruments';
 import Settings from '@/pages/Settings';
+import AssinaturaCliente from '@/pages/AssinaturaCliente';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const location = useLocation();
+
+  // Página pública de assinatura — não requer login
+  if (location.pathname.startsWith('/assinatura/')) {
+    return (
+      <Routes>
+        <Route path="/assinatura/:token" element={<AssinaturaCliente />} />
+      </Routes>
+    );
+  }
 
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {

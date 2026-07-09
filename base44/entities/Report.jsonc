@@ -84,6 +84,9 @@
     "assinatura_cliente_url": {
       "type": "string"
     },
+    "assinatura_token": {
+      "type": "string"
+    },
     "measurements": {
       "type": "array",
       "items": {

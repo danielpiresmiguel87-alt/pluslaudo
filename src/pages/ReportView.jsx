@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Pencil, Download, Printer, CheckCircle, Upload, FileText, Save, PenLine } from 'lucide-react';
+import { ArrowLeft, Pencil, Download, Printer, CheckCircle, Upload, FileText, Save, PenLine, Mail, CheckCheck } from 'lucide-react';
 import { generateReportPDF } from '@/utils/reportPdf';
 import SignaturePad from '@/components/report/SignaturePad';
 import { formatEnvironmentConditions } from '@/utils/environment';
@@ -24,6 +24,8 @@ export default function ReportView() {
   const [uploadingArt, setUploadingArt] = useState(false);
   const [signing, setSigning] = useState(false);
   const [savingSignatures, setSavingSignatures] = useState(false);
+  const [sendingLink, setSendingLink] = useState(false);
+  const [linkSent, setLinkSent] = useState(false);
   const engSigRef = useRef(null);
   const cliSigRef = useRef(null);
 
@@ -48,6 +50,25 @@ export default function ReportView() {
       });
     })();
   }, [id]);
+
+  const handleSendForSignature = async () => {
+    if (!data.client?.email) {
+      alert('Este cliente não tem e-mail cadastrado. Cadastre o e-mail do cliente na página de Clientes antes de enviar.');
+      return;
+    }
+    setSendingLink(true);
+    try {
+      const res = await base44.functions.invoke('enviarAssinatura', {
+        report_id: id,
+        app_url: window.location.origin
+      });
+      alert(`Link de assinatura enviado para: ${res.data.email}`);
+      setLinkSent(true);
+    } catch (e) {
+      alert('Erro ao enviar: ' + (e?.response?.data?.error || e?.data?.error || e.message));
+    }
+    setSendingLink(false);
+  };
 
   const handlePdf = async () => {
     setExporting(true);
@@ -193,6 +214,12 @@ export default function ReportView() {
           )}
           {canEdit && ws === 'pendente_revisao' && (
             <Button onClick={handleConcluir}><CheckCircle className="h-4 w-4 mr-2" />Concluir Laudo</Button>
+          )}
+          {canEdit && (
+            <Button variant="outline" onClick={handleSendForSignature} disabled={sendingLink}>
+              {linkSent ? <CheckCheck className="h-4 w-4 mr-2" /> : <Mail className="h-4 w-4 mr-2" />}
+              {sendingLink ? 'Enviando...' : linkSent ? 'Link Enviado' : 'Enviar para Assinatura'}
+            </Button>
           )}
           <Button variant="outline" onClick={handlePrint} disabled={exporting}><Printer className="h-4 w-4 mr-2" />{exporting ? 'Gerando...' : 'Imprimir'}</Button>
           <Button onClick={handlePdf} disabled={exporting}><Download className="h-4 w-4 mr-2" />{exporting ? 'Gerando...' : 'Exportar PDF'}</Button>
