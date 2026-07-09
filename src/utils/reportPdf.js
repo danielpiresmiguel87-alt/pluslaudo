@@ -286,6 +286,29 @@ export async function generateReportPDF(report, data) {
   section(9, 'METODOLOGIA APLICADA');
   para(report.metodologia);
 
+  // Diagramas ilustrativos da metodologia
+  const metodologiaImgs = [
+    'https://media.base44.com/images/public/6a4f95ae9ed008261810a9f7/01e2c4023_image.png',
+    'https://media.base44.com/images/public/6a4f95ae9ed008261810a9f7/eee8ea9b2_image.png',
+  ];
+  for (const diagramUrl of metodologiaImgs) {
+    const img = await loadImage(diagramUrl);
+    if (!img) continue;
+    const maxW = 110;
+    const ratio = img.h / img.w;
+    let iw = maxW;
+    let ih = iw * ratio;
+    const maxH = 75;
+    if (ih > maxH) { ih = maxH; iw = ih / ratio; }
+    ensure(ih + 12);
+    const ix = (W - iw) / 2;
+    doc.setDrawColor(...COLOR_ACCENT);
+    doc.setLineWidth(0.3);
+    doc.rect(ix - 1, y - 1, iw + 2, ih + 2);
+    doc.addImage(img.dataURL, 'JPEG', ix, y, iw, ih);
+    y += ih + 8;
+  }
+
   // ── 10. ART ──
   section(10, 'Anotação de Responsabilidade Técnica (ART)');
   kv('Número da ART', report.numero_art);
