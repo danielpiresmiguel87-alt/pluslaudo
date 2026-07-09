@@ -476,24 +476,45 @@ export async function generateReportPDF(report, data) {
       doc.setFillColor(...(approved ? COLOR_GREEN : COLOR_RED));
       doc.rect(M, y - 4, 3, headerH, 'F');
 
-      // Linha 1: "Medição N" + status à direita
+      // Linha 1: "Medição N"
       doc.setFontSize(11);
       doc.setFont(undefined, 'bold');
       doc.setTextColor(...COLOR_PRIMARY);
       doc.text(`Medição ${i + 1}`, M + 7, y + 1);
 
-      doc.setFontSize(9.5);
-      doc.setTextColor(...(approved ? COLOR_GREEN : COLOR_RED));
-      doc.text(approved ? 'APROVADO' : 'REPROVADO', W - M - 4, y + 1, { align: 'right' });
-
-      // Linha 2: descrição + valor
+      // Linha 2: LOCAL / VALOR MEDIDO / STATUS com labels
       doc.setFontSize(9.5);
       doc.setFont(undefined, 'normal');
       doc.setTextColor(...COLOR_GRAY);
-      let line2 = '';
-      if (m.descricao) line2 += m.descricao;
-      if (m.valor_medido != null) line2 += (line2 ? '   |   ' : '') + `Valor: ${m.valor_medido} Ohms`;
-      if (line2) doc.text(line2, M + 7, y + 9);
+      const valStr = m.valor_medido != null ? `${m.valor_medido} Ohms` : '-';
+      const statusStr = approved ? 'APROVADO' : 'REPROVADO';
+
+      const labelX = M + 7;
+      const localX = labelX + 17;
+      const valorLabelX = localX + 42;
+      const valorX = valorLabelX + 30;
+      const statusLabelX = valorX + 22;
+
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(...COLOR_PRIMARY);
+      doc.text('LOCAL:', labelX, y + 9);
+      doc.setFont(undefined, 'normal');
+      doc.setTextColor(...COLOR_GRAY);
+      doc.text(m.descricao || '-', localX, y + 9);
+
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(...COLOR_PRIMARY);
+      doc.text('VALOR:', valorLabelX, y + 9);
+      doc.setFont(undefined, 'normal');
+      doc.setTextColor(...COLOR_GRAY);
+      doc.text(valStr, valorX, y + 9);
+
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(...COLOR_PRIMARY);
+      doc.text('STATUS:', statusLabelX, y + 9);
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(...(approved ? COLOR_GREEN : COLOR_RED));
+      doc.text(statusStr, statusLabelX + 16, y + 9);
 
       doc.setTextColor(0, 0, 0);
       y += headerH + 2;
