@@ -12,6 +12,10 @@
       "type": "string",
       "format": "date"
     },
+    "validade": {
+      "type": "string",
+      "format": "date"
+    },
     "cliente_id": {
       "type": "string"
     },
