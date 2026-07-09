@@ -56,6 +56,8 @@ Deno.serve(async (req) => {
     const client = clients.find(c => c.id === report.cliente_id);
     const company = companies[0];
     const engineer = engineers.find(e => e.id === report.engenheiro_id);
+    const electrician = electricians.find(e => e.id === report.eletricista_id);
+    const instrument = instruments.find(i => i.id === report.instrumento_id);
 
     return Response.json({
       report: {
@@ -63,30 +65,55 @@ Deno.serve(async (req) => {
         tag_equipamento: report.tag_equipamento,
         local: report.local,
         data: report.data,
+        validade: report.validade,
         limite_ohms: report.limite_ohms,
         measurements: report.measurements || [],
         status: report.status,
+        normas: report.normas,
+        condicoes_ambiente: report.condicoes_ambiente,
         objetivo: report.objetivo,
         metodologia: report.metodologia,
+        limitacoes: report.limitacoes,
         recomendacoes: report.recomendacoes,
         numero_art: report.numero_art,
+        assinatura_engenheiro_url: report.assinatura_engenheiro_url,
       },
       client: client ? {
         razao_social: client.razao_social,
         cnpj: client.cnpj,
         endereco: client.endereco,
         cidade: client.cidade,
+        cep: client.cep,
+        bairro: client.bairro,
+        fone: client.fone,
+        logo_url: client.logo_url,
       } : null,
       company: company ? {
         razao_social: company.razao_social,
         cnpj: company.cnpj,
         endereco: company.endereco,
+        cidade: company.cidade,
+        cep: company.cep,
+        bairro: company.bairro,
         fone: company.fone,
         email: company.email,
+        logo_url: company.logo_url,
       } : null,
       engineer: engineer ? {
         nome: engineer.nome,
+        cpf: engineer.cpf,
         crea_sc: engineer.crea_sc,
+      } : null,
+      electrician: electrician ? {
+        nome: electrician.nome,
+        cpf: electrician.cpf,
+        registro_profissional: electrician.registro_profissional,
+      } : null,
+      instrument: instrument ? {
+        marca_modelo: instrument.marca_modelo,
+        numero_serie: instrument.numero_serie,
+        data_calibracao: instrument.data_calibracao,
+        especificacoes: instrument.especificacoes,
       } : null,
     });
   } catch (error) {
