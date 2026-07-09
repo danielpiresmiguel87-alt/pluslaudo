@@ -168,9 +168,9 @@ export async function generateReportPDF(report, data) {
 
   section('9. PARECER TÉCNICO');
   const conclusion = allApproved
-    ? `Após a coleta e análise dos dados obtidos, conclui-se que os valores de resistência ôhmica do sistema de aterramento estão DENTRO dos padrões pré-estabelecidos. O sistema de aterramento não é superior a ${lim} Ohms. Portanto, afirma-se que o equipamento, para fins de aterramento, está APTO para operação.`
+    ? `Após a coleta e análise dos dados obtidos, conclui-se que os valores de resistência ôhmica do sistema de aterramento estão DENTRO dos padrões pré-estabelecidos na NSCI/94 (norma de segurança contra incêndio). Conforme seção IV do referido capítulo, o sistema de aterramento não poderá ser superior a ${lim} OHMS para edificações em geral em qualquer época do ano. Para tanto, afirma-se que este equipamento, para fins de aterramento, está APTO para operação.`
     : hasMeas
-    ? `Após a coleta e análise dos dados obtidos, conclui-se que uma ou mais medições apresentaram valores ACIMA do limite de ${lim} Ohms. Portanto, afirma-se que o sistema de aterramento está INAPTO para operação, sendo necessárias correções.`
+    ? `Após a coleta e análise dos dados obtidos, conclui-se que uma ou mais medições apresentaram valores ACIMA do limite de ${lim} Ohms estabelecido pela NSCI/94. Portanto, afirma-se que o sistema de aterramento está INAPTO para operação, sendo necessárias correções para adequação aos padrões.`
     : 'Laudo sem medições registradas.';
   para(conclusion);
   ensure(8);
