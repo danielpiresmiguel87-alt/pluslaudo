@@ -400,41 +400,59 @@ export async function generateReportPDF(report, data) {
     for (let i = 0; i < measurements.length; i++) {
       const m = measurements[i];
       if (!m.fotos || m.fotos.length === 0) continue;
-      ensure(14);
+
+      // Cabeçalho da medição (descrição, valor, status) numa linha
+      ensure(20);
       doc.setFontSize(11);
       doc.setFont(undefined, 'bold');
       doc.setTextColor(...COLOR_PRIMARY);
-      doc.text(`Medição ${i + 1}${m.descricao ? ' - ' + m.descricao : ''}`, M, y);
+      doc.text(`Medição ${i + 1}`, M, y);
       doc.setTextColor(0, 0, 0);
+      doc.setFont(undefined, 'normal');
+      doc.setFontSize(10);
+      if (m.descricao) {
+        doc.text(`Local / Descrição: ${m.descricao}`, M + 22, y);
+      }
+      if (m.valor_medido != null) {
+        const approved = (m.valor_medido ?? Infinity) <= lim;
+        doc.text(`Valor:`, W - M - 55, y);
+        doc.setFont(undefined, 'bold');
+        doc.text(`${m.valor_medido} Ω`, W - M - 42, y);
+        doc.setFont(undefined, 'normal');
+        doc.text(`Status:`, W - M - 28, y);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...(approved ? COLOR_GREEN : COLOR_RED));
+        doc.text(approved ? 'APROVADO' : 'REPROVADO', W - M - 15, y);
+        doc.setTextColor(0, 0, 0);
+      }
       y += 6;
 
-      let x = M;
-      const pw = 50;
-      let rowMaxH = 0;
+      // Fotos: uma por linha, maiores
+      const pw = 120;
       for (const fotoUrl of m.fotos) {
         const img = await loadImage(fotoUrl);
         if (!img) continue;
         const ratio = img.h / img.w;
-        const ph = pw * ratio;
-        if (x + pw > W - M) {
-          x = M;
-          y += rowMaxH + 5;
-          rowMaxH = 0;
-        }
-        ensure(ph + 8);
+        const ph = Math.min(pw * ratio, 100);
+        const actualW = ph / ratio;
+
+        ensure(ph + 14);
+        const fx = (W - actualW) / 2;
         doc.setDrawColor(...COLOR_ACCENT);
-        doc.setLineWidth(0.2);
-        doc.rect(x - 1, y - 4, pw + 2, ph + 2);
-        doc.addImage(img.dataURL, 'JPEG', x, y - 3, pw, ph);
-        doc.setFontSize(8);
+        doc.setLineWidth(0.3);
+        doc.rect(fx - 1, y - 1, actualW + 2, ph + 2);
+        doc.addImage(img.dataURL, 'JPEG', fx, y, actualW, ph);
+        y += ph + 3;
+
+        // Legenda ABAIXO da foto (fora da borda)
+        doc.setFontSize(9);
         doc.setFont(undefined, 'normal');
         doc.setTextColor(...COLOR_GRAY);
-        doc.text(`Foto ${m.fotos.indexOf(fotoUrl) + 1}`, x + pw / 2, y + ph, { align: 'center' });
+        doc.text(`Foto ${m.fotos.indexOf(fotoUrl) + 1} - Medição ${i + 1}`, W / 2, y, { align: 'center' });
         doc.setTextColor(0, 0, 0);
-        x += pw + 4;
-        rowMaxH = Math.max(rowMaxH, ph);
+        y += 8;
       }
-      y += rowMaxH + 8;
+      y += 4;
     }
   }
 
