@@ -11,6 +11,14 @@ import MeasurementEditor from '@/components/report/MeasurementEditor';
 import EnvironmentConditions from '@/components/report/EnvironmentConditions';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ArrowLeft, Save, Plus } from 'lucide-react';
+import {
+  carregarRascunho,
+  salvarRascunho,
+  limparRascunho,
+  garantirConexao,
+  uploadFotosEmLote,
+  useBloquearSaida,
+} from '@/lib/offline';
 
 const DEFAULT_OBJECTIVE = "O presente laudo técnico tem por objetivo, determinar o valor Ôhmico referente ao aterramento de equipamentos juntamente ao sistema de proteção contra descargas atmosféricas instalado na empresa, conforme PPCI (projeto preventivo contra incêndio), atendendo a resolução n° 017/CAT/CCB/88 do Corpo de bombeiros da Polícia militar do Estado de Santa Catarina.";
 
@@ -41,7 +49,18 @@ export default function ReportForm() {
   const [showClientDialog, setShowClientDialog] = useState(false);
   const [clientForm, setClientForm] = useState({ razao_social: '', cnpj: '', endereco: '', cidade: '', cep: '', bairro: '', fone: '' });
 
+  const draftKey = isNew ? 'report_draft' : `report_draft_${id}`;
+
   useEffect(() => {
+    const draft = carregarRascunho(draftKey);
+    if (draft) {
+      setForm({
+        objetivo: DEFAULT_OBJECTIVE, metodologia: DEFAULT_METHODOLOGY,
+        recomendacoes: DEFAULT_RECOMMENDATIONS, normas: DEFAULT_NORMAS,
+        limite_ohms: 10, measurements: [], ...draft,
+      });
+      setLoading(false);
+    }
     Promise.all([
       base44.entities.Client.list(),
       base44.entities.Engineer.list(),
@@ -50,7 +69,7 @@ export default function ReportForm() {
     ]).then(([c, e, el, i]) => {
       setClients(c); setEngineers(e); setElectricians(el); setInstruments(i);
     });
-    if (!isNew) {
+    if (!isNew && !draft) {
       base44.entities.Report.get(id).then(r => {
         setForm({
           objetivo: DEFAULT_OBJECTIVE, metodologia: DEFAULT_METHODOLOGY,
@@ -60,24 +79,63 @@ export default function ReportForm() {
         setLoading(false);
       });
     }
-  }, [id]);
+  }, [id, draftKey]);
+
+  // Auto-save rascunho
+  useEffect(() => {
+    if (!loading) salvarRascunho(draftKey, form);
+  }, [form, draftKey, loading]);
+
+  // Bloqueia saída acidental quando há dados
+  useBloquearSaida(!saving && (!!form.equipamento || !!form.cliente_id || (form.measurements?.length > 0)));
 
   const set = (field, value) => setForm(f => ({ ...f, [field]: value }));
 
   const handleSave = async () => {
+    if (!garantirConexao()) return;
     setSaving(true);
-    const lim = form.limite_ohms || 10;
-    const measurements = form.measurements || [];
-    const status = measurements.length === 0 ? 'rascunho' :
-      measurements.every(m => (m.valor_medido ?? Infinity) <= lim) ? 'aprovado' : 'reprovado';
-    const validade = form.data ? new Date(new Date(form.data).getTime() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : undefined;
-    const payload = { ...form, status, validade };
-    if (isNew) {
-      const created = await base44.entities.Report.create(payload);
-      navigate(`/reports/${created.id}`);
-    } else {
-      await base44.entities.Report.update(id, payload);
-      navigate(`/reports/${id}`);
+    try {
+      // Upload de todas as fotos pendentes (data URL → URL remoto)
+      const measurements = form.measurements || [];
+      const updatedMeasurements = [];
+      for (const m of measurements) {
+        const fotos = m.fotos || [];
+        const pendentes = fotos.filter(f => typeof f === 'object' && (f._localFile || f.dataUrl));
+        if (pendentes.length > 0) {
+          const { itens, falhas } = await uploadFotosEmLote(pendentes, {
+            uploadFn: (file) => base44.integrations.Core.UploadFile({ file }),
+          });
+          if (falhas.length > 0) {
+            alert(`${falhas.length} foto(s) não puderam ser enviadas. Verifique a conexão e tente novamente.`);
+            setSaving(false);
+            return;
+          }
+          const urlsExistentes = fotos.filter(f => typeof f === 'string' || f.url).map(f => typeof f === 'string' ? f : f.url);
+          updatedMeasurements.push({ ...m, fotos: [...urlsExistentes, ...itens] });
+        } else {
+          updatedMeasurements.push({
+            ...m,
+            fotos: fotos.map(f => typeof f === 'string' ? f : (f.url || f)),
+          });
+        }
+      }
+
+      const lim = form.limite_ohms || 10;
+      const status = updatedMeasurements.length === 0 ? 'rascunho' :
+        updatedMeasurements.every(m => (m.valor_medido ?? Infinity) <= lim) ? 'aprovado' : 'reprovado';
+      const validade = form.data ? new Date(new Date(form.data).getTime() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : undefined;
+      const payload = { ...form, measurements: updatedMeasurements, status, validade };
+      if (isNew) {
+        const created = await base44.entities.Report.create(payload);
+        limparRascunho(draftKey);
+        navigate(`/reports/${created.id}`);
+      } else {
+        await base44.entities.Report.update(id, payload);
+        limparRascunho(draftKey);
+        navigate(`/reports/${id}`);
+      }
+    } catch (e) {
+      alert('Erro ao salvar: ' + e.message);
     }
     setSaving(false);
   };
@@ -210,6 +268,7 @@ export default function ReportForm() {
             <Button variant="outline" onClick={() => setShowClientDialog(false)}>Cancelar</Button>
             <Button onClick={async () => {
               if (!clientForm.razao_social) return;
+              if (!garantirConexao()) return;
               const created = await base44.entities.Client.create(clientForm);
               setClients(s => [...s, created]);
               set('cliente_id', created.id);

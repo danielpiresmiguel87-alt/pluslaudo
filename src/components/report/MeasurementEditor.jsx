@@ -1,10 +1,15 @@
 import { useState } from 'react';
-import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Upload, Trash2, Plus, X } from 'lucide-react';
+import { capturarFoto } from '@/lib/offline';
+
+const getFotoSrc = (foto) => {
+  if (typeof foto === 'string') return foto;
+  return foto.dataUrl || foto.url || '';
+};
 
 export default function MeasurementEditor({ measurements, limite, onChange }) {
   const [uploading, setUploading] = useState(null);
@@ -25,14 +30,18 @@ export default function MeasurementEditor({ measurements, limite, onChange }) {
 
   const handlePhotoUpload = async (index, files) => {
     setUploading(index);
-    const urls = [];
-    for (const file of files) {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      urls.push(file_url);
+    try {
+      const novasFotos = [];
+      for (const file of files) {
+      const { dataUrl, file: compressedFile } = await capturarFoto(file);
+        novasFotos.push({ dataUrl, _localFile: compressedFile });
+      }
+      const next = [...measurements];
+      next[index] = { ...next[index], fotos: [...(next[index].fotos || []), ...novasFotos] };
+      onChange(next);
+    } catch (e) {
+      alert('Erro ao processar imagem: ' + e.message);
     }
-    const next = [...measurements];
-    next[index] = { ...next[index], fotos: [...(next[index].fotos || []), ...urls] };
-    onChange(next);
     setUploading(null);
   };
 
@@ -65,7 +74,7 @@ export default function MeasurementEditor({ measurements, limite, onChange }) {
             <div className="flex flex-wrap gap-2">
               {m.fotos?.map((foto, fi) => (
                 <div key={fi} className="relative">
-                  <img src={foto} alt={`Foto ${fi + 1}`} className="h-20 w-20 object-cover rounded" />
+                  <img src={getFotoSrc(foto)} alt={`Foto ${fi + 1}`} className="h-20 w-20 object-cover rounded" />
                   <button
                     type="button"
                     onClick={() => removePhoto(i, fi)}
