@@ -446,74 +446,96 @@ export async function generateReportPDF(report, data) {
       const m = measurements[i];
       if (!m.fotos || m.fotos.length === 0) continue;
 
-      // Cabeçalho da medição (empilhado verticalmente)
-      ensure(30);
+      const approved = (m.valor_medido ?? Infinity) <= lim;
+
+      // ── Box de cabeçalho da medição ──
+      // Barra lateral colorida (verde/vermelho conforme status)
+      const headerH = 20;
+      ensure(headerH + 6);
+      doc.setFillColor(...COLOR_LIGHT);
+      doc.rect(M, y - 4, W - 2 * M, headerH, 'F');
+      doc.setFillColor(...(approved ? COLOR_GREEN : COLOR_RED));
+      doc.rect(M, y - 4, 3, headerH, 'F');
+
+      // Linha 1: "Medição N" + status à direita
       doc.setFontSize(11);
       doc.setFont(undefined, 'bold');
       doc.setTextColor(...COLOR_PRIMARY);
-      doc.text(`Medição ${i + 1}`, M, y);
-      y += 6;
-      if (m.descricao) {
-        doc.setFont(undefined, 'normal');
-        doc.setFontSize(10);
-        doc.setTextColor(...COLOR_PRIMARY);
-        doc.text(`Local / Descrição: `, M, y);
-        doc.setFont(undefined, 'bold');
-        doc.setTextColor(0, 0, 0);
-        doc.text(m.descricao, M + 35, y);
-        y += 6;
-      }
-      if (m.valor_medido != null) {
-        const approved = (m.valor_medido ?? Infinity) <= lim;
-        doc.setFont(undefined, 'normal');
-        doc.setFontSize(10);
-        doc.setTextColor(...COLOR_PRIMARY);
-        doc.text(`Valor:`, M, y);
-        doc.setFont(undefined, 'bold');
-        doc.setTextColor(0, 0, 0);
-        doc.text(`${m.valor_medido} Ohms`, M + 15, y);
-        y += 6;
-        doc.setFont(undefined, 'normal');
-        doc.setTextColor(...COLOR_PRIMARY);
-        doc.text(`Status:`, M, y);
-        doc.setFont(undefined, 'bold');
-        doc.setTextColor(...(approved ? COLOR_GREEN : COLOR_RED));
-        doc.text(approved ? 'APROVADO' : 'REPROVADO', M + 15, y);
-        doc.setTextColor(0, 0, 0);
-        y += 6;
-      }
+      doc.text(`Medição ${i + 1}`, M + 7, y + 1);
 
-      // Fotos: uma por linha, maiores
-      const pw = 120;
+      doc.setFontSize(9.5);
+      doc.setTextColor(...(approved ? COLOR_GREEN : COLOR_RED));
+      doc.text(approved ? 'APROVADO' : 'REPROVADO', W - M - 4, y + 1, { align: 'right' });
+
+      // Linha 2: descrição + valor
+      doc.setFontSize(9.5);
+      doc.setFont(undefined, 'normal');
+      doc.setTextColor(...COLOR_GRAY);
+      let line2 = '';
+      if (m.descricao) line2 += m.descricao;
+      if (m.valor_medido != null) line2 += (line2 ? '   |   ' : '') + `Valor: ${m.valor_medido} Ohms`;
+      if (line2) doc.text(line2, M + 7, y + 9);
+
+      doc.setTextColor(0, 0, 0);
+      y += headerH + 2;
+
+      // ── Fotos em grid 2 colunas ──
+      const gap = 6;
+      const cellW = (W - 2 * M - gap) / 2;
+      const maxPhotoH = 80;
+      let col = 0;
+      let rowStartY = y;
+      let rowMaxH = 0;
+      let fotoNum = 0;
+
       for (const fotoUrl of m.fotos) {
         const img = await loadImage(fotoUrl);
         if (!img) continue;
+        fotoNum++;
         const ratio = img.h / img.w;
-        const ph = Math.min(pw * ratio, 100);
-        const actualW = ph / ratio;
+        let iw = cellW;
+        let ih = iw * ratio;
+        if (ih > maxPhotoH) { ih = maxPhotoH; iw = ih / ratio; }
+        const captionH = 8;
+        const cellH = ih + captionH;
+        if (cellH > rowMaxH) rowMaxH = cellH;
 
-        ensure(ph + 14);
-        const fx = (W - actualW) / 2;
+        if (col === 0) {
+          ensure(rowMaxH + 4);
+          rowStartY = y;
+        }
+
+        const cx = M + col * (cellW + gap) + (cellW - iw) / 2;
+        const cy = y;
+
+        // Moldura
         doc.setDrawColor(...COLOR_ACCENT);
         doc.setLineWidth(0.3);
-        doc.rect(fx - 1, y - 1, actualW + 2, ph + 2);
-        addImg(doc, img, fx, y, actualW, ph);
-        y += ph + 3;
+        doc.setFillColor(255, 255, 255);
+        doc.rect(cx - 1, cy - 1, iw + 2, ih + 2, 'FD');
+        addImg(doc, img, cx, cy, iw, ih);
 
-        // Legenda ABAIXO da foto com linha separadora e estilo destacado
-        doc.setDrawColor(...COLOR_ACCENT);
-        doc.setLineWidth(0.3);
-        doc.line(fx, y, fx + actualW, y);
-        doc.setFontSize(9.5);
+        // Legenda
+        doc.setFontSize(8.5);
         doc.setFont(undefined, 'italic');
         doc.setTextColor(...COLOR_PRIMARY);
-        const fotoNum = m.fotos.indexOf(fotoUrl) + 1;
         const legenda = m.descricao
-          ? `Foto ${fotoNum} — Medição ${i + 1}: ${m.descricao}`
-          : `Foto ${fotoNum} — Medição ${i + 1}`;
-        doc.text(legenda, W / 2, y + 4.5, { align: 'center' });
+          ? `Foto ${fotoNum} — ${m.descricao}`
+          : `Foto ${fotoNum}`;
+        const capLines = doc.splitTextToSize(legenda, cellW - 2);
+        doc.text(capLines[0] || legenda, cx + iw / 2, cy + ih + 4.5, { align: 'center' });
         doc.setTextColor(0, 0, 0);
-        y += 10;
+
+        col++;
+        if (col >= 2) {
+          y = rowStartY + rowMaxH + 6;
+          col = 0;
+          rowMaxH = 0;
+        }
+      }
+      // Linha final parcial
+      if (col > 0) {
+        y = rowStartY + rowMaxH + 6;
       }
       y += 4;
     }
