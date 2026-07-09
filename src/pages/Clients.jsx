@@ -8,6 +8,7 @@ export default function Clients() {
       fields={[
         { name: 'razao_social', label: 'Razão Social' },
         { name: 'cnpj', label: 'CNPJ', lookup: 'cnpj' },
+        { name: 'email', label: 'E-mail' },
         { name: 'logo_url', label: 'Logo do Cliente', type: 'image', full: true },
         { name: 'endereco', label: 'Endereço' },
         { name: 'cidade', label: 'Cidade' },

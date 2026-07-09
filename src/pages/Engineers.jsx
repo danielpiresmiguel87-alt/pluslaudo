@@ -9,6 +9,7 @@ export default function Engineers() {
         { name: 'nome', label: 'Nome' },
         { name: 'cpf', label: 'CPF' },
         { name: 'crea_sc', label: 'CREA SC' },
+        { name: 'email', label: 'E-mail' },
       ]}
     />
   );

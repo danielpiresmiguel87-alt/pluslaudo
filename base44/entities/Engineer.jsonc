@@ -10,6 +10,9 @@
     },
     "crea_sc": {
       "type": "string"
+    },
+    "email": {
+      "type": "string"
     }
   },
   "required": [

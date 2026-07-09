@@ -8,6 +8,9 @@
     "cnpj": {
       "type": "string"
     },
+    "email": {
+      "type": "string"
+    },
     "endereco": {
       "type": "string"
     },
