@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Pencil, Download, Printer, CheckCircle, Upload, FileText, Save, PenLine, Mail, CheckCheck } from 'lucide-react';
+import { ArrowLeft, Pencil, Download, Printer, CheckCircle, Upload, FileText, Save, PenLine, Mail, CheckCheck, Copy, Share2 } from 'lucide-react';
 import { generateReportPDF } from '@/utils/reportPdf';
 import SignaturePad from '@/components/report/SignaturePad';
 import { formatEnvironmentConditions } from '@/utils/environment';
@@ -26,6 +26,8 @@ export default function ReportView() {
   const [savingSignatures, setSavingSignatures] = useState(false);
   const [sendingLink, setSendingLink] = useState(false);
   const [linkSent, setLinkSent] = useState(false);
+  const [signingUrl, setSigningUrl] = useState(null);
+  const [copied, setCopied] = useState(false);
   const engSigRef = useRef(null);
   const cliSigRef = useRef(null);
 
@@ -52,22 +54,40 @@ export default function ReportView() {
   }, [id]);
 
   const handleSendForSignature = async () => {
-    if (!data.client?.email) {
-      alert('Este cliente não tem e-mail cadastrado. Cadastre o e-mail do cliente na página de Clientes antes de enviar.');
-      return;
-    }
     setSendingLink(true);
     try {
       const res = await base44.functions.invoke('enviarAssinatura', {
         report_id: id,
         app_url: window.location.origin
       });
-      alert(`Link de assinatura enviado para: ${res.data.email}`);
+      setSigningUrl(res.data.signing_url);
       setLinkSent(true);
+      if (res.data.email_sent) {
+        alert(`E-mail enviado automaticamente para: ${res.data.email}`);
+      }
     } catch (e) {
-      alert('Erro ao enviar: ' + (e?.response?.data?.error || e?.data?.error || e.message));
+      alert('Erro ao gerar link: ' + (e?.response?.data?.error || e?.data?.error || e.message));
     }
     setSendingLink(false);
+  };
+
+  const handleCopyLink = () => {
+    if (signingUrl) {
+      navigator.clipboard.writeText(signingUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleWhatsAppShare = () => {
+    if (signingUrl && data.client?.fone) {
+      const phone = data.client.fone.replace(/\D/g, '');
+      const msg = encodeURIComponent(`Olá! Você recebeu um Laudo Técnico para assinatura. Acesse o link: ${signingUrl}`);
+      window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
+    } else if (signingUrl) {
+      const msg = encodeURIComponent(`Laudo Técnico para assinatura. Acesse: ${signingUrl}`);
+      window.open(`https://wa.me/?text=${msg}`, '_blank');
+    }
   };
 
   const handlePdf = async () => {
@@ -215,10 +235,10 @@ export default function ReportView() {
           {(canEdit || isEngenheiro) && ws === 'pendente_revisao' && (
             <Button onClick={handleConcluir}><CheckCircle className="h-4 w-4 mr-2" />Concluir Revisão</Button>
           )}
-          {canEdit && (
+          {canEdit && !signingUrl && (
             <Button variant="outline" onClick={handleSendForSignature} disabled={sendingLink}>
-              {linkSent ? <CheckCheck className="h-4 w-4 mr-2" /> : <Mail className="h-4 w-4 mr-2" />}
-              {sendingLink ? 'Enviando...' : linkSent ? 'Link Enviado' : 'Enviar para Assinatura'}
+              <Mail className="h-4 w-4 mr-2" />
+              {sendingLink ? 'Gerando...' : 'Gerar Link de Assinatura'}
             </Button>
           )}
           <Button variant="outline" onClick={handlePrint} disabled={exporting}><Printer className="h-4 w-4 mr-2" />{exporting ? 'Gerando...' : 'Imprimir'}</Button>
@@ -233,6 +253,27 @@ export default function ReportView() {
         <Badge variant={workflowVariant} className="text-sm">{workflowLabel}</Badge>
         <span className="text-sm text-muted-foreground">Limite: {lim} Ω</span>
       </div>
+
+      {signingUrl && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="pt-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-blue-600" />
+              <h3 className="font-semibold text-blue-800">Link de assinatura gerado</h3>
+            </div>
+            <p className="text-sm text-blue-700">Envie o link abaixo ao cliente por WhatsApp ou e-mail para que ele possa revisar e assinar o laudo.</p>
+            <div className="flex items-center gap-2 bg-white rounded-lg border p-2">
+              <Input readOnly value={signingUrl} className="flex-1 text-sm border-0 focus-visible:ring-0" />
+              <Button size="sm" variant="outline" onClick={handleCopyLink}>
+                <Copy className="h-4 w-4 mr-1" /> {copied ? 'Copiado!' : 'Copiar'}
+              </Button>
+              <Button size="sm" onClick={handleWhatsAppShare}>
+                <Share2 className="h-4 w-4 mr-1" /> WhatsApp
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Section title="Identificação">
         <InfoRow label="Equipamento" value={report.equipamento} />

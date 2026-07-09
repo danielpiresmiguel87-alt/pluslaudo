@@ -37,10 +37,12 @@ Deno.serve(async (req) => {
     const local = report.local || 'Não informado';
     const data = report.data || 'Não informada';
 
-    await base44.asServiceRole.integrations.Core.SendEmail({
-      to: client.email,
-      subject: `Assinatura - Laudo Técnico de Aterramento - ${equipamento}`,
-      body: `Prezado(a) ${client.razao_social},
+    let emailSent = false;
+    try {
+      await base44.asServiceRole.integrations.Core.SendEmail({
+        to: client.email,
+        subject: `Assinatura - Laudo Técnico de Aterramento - ${equipamento}`,
+        body: `Prezado(a) ${client.razao_social},
 
 Você recebeu um Laudo Técnico de Aterramento para assinatura.
 
@@ -59,9 +61,13 @@ Importante:
 
 Atenciosamente,
 Equipe Técnica`
-    });
+      });
+      emailSent = true;
+    } catch (e) {
+      // E-mail pode falhar se o cliente não for usuário do app — retornamos o link para envio manual
+    }
 
-    return Response.json({ success: true, email: client.email });
+    return Response.json({ success: true, email: client.email, signing_url: signingUrl, email_sent: emailSent });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
