@@ -147,7 +147,7 @@ export default function ReportView() {
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
-        <Badge variant={report.status === 'aprovado' ? 'default' : report.status === 'reprovado' ? 'destructive' : 'secondary'} className="text-sm">
+        <Badge variant={report.status === 'aprovado' ? 'default' : report.status === 'reprovado' ? 'destructive' : 'secondary'} className={`text-sm ${report.status === 'aprovado' ? 'bg-green-600 hover:bg-green-600' : ''}`}>
           {report.status === 'aprovado' ? 'Aprovado' : report.status === 'reprovado' ? 'Reprovado' : 'Rascunho'}
         </Badge>
         <Badge variant={workflowVariant} className="text-sm">{workflowLabel}</Badge>
@@ -289,7 +289,7 @@ export default function ReportView() {
                 <div key={i} className="border rounded-lg p-4">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-medium">Medição {i + 1}</h4>
-                    <Badge variant={approved ? 'default' : 'destructive'}>{approved ? 'Aprovado' : 'Reprovado'}</Badge>
+                    <Badge variant={approved ? 'default' : 'destructive'} className={approved ? 'bg-green-600 hover:bg-green-600' : ''}>{approved ? 'Aprovado' : 'Reprovado'}</Badge>
                   </div>
                   <InfoRow label="Local / Descrição" value={m.descricao} />
                   <InfoRow label="Valor Medido" value={m.valor_medido != null ? `${m.valor_medido} Ω` : '-'} />

@@ -158,7 +158,7 @@ export default function Home() {
                       <WfIcon className="h-3 w-3 mr-1" />
                       {WORKFLOW_LABELS[ws]}
                     </Badge>
-                    <Badge variant={r.status === 'aprovado' ? 'default' : r.status === 'reprovado' ? 'destructive' : 'secondary'}>
+                    <Badge variant={r.status === 'aprovado' ? 'default' : r.status === 'reprovado' ? 'destructive' : 'secondary'} className={r.status === 'aprovado' ? 'bg-green-600 hover:bg-green-600' : ''}>
                       {r.status === 'aprovado' ? 'Aprovado' : r.status === 'reprovado' ? 'Reprovado' : 'Rascunho'}
                     </Badge>
                   </div>
