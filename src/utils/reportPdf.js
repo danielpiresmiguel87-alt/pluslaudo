@@ -367,31 +367,30 @@ export async function generateReportPDF(report, data) {
     doc.setTextColor(0, 0, 0);
     y += 9;
 
+    const tableTop = y - 5;
     for (let i = 0; i < measurements.length; i++) {
       const m = measurements[i];
       const approved = (m.valor_medido ?? Infinity) <= lim;
-      const rowH = 8;
 
-      ensure(rowH);
-      // Zebra striping
+      doc.setFontSize(9.5);
+      doc.setFont(undefined, 'normal');
+      const descLines = doc.splitTextToSize(m.descricao || '-', colW[1] - 4);
+      const rowH = Math.max(8, 5.5 * descLines.length + 3);
+
+      ensure(rowH + 5);
+      // Zebra striping PRIMEIRO (antes do texto)
       if (i % 2 === 0) {
         doc.setFillColor(248, 250, 252);
         doc.rect(M, y - 5, W - 2 * M, rowH, 'F');
       }
 
-      doc.setFontSize(9.5);
+      // Agora o texto
       doc.setFont(undefined, 'bold');
       doc.setTextColor(...COLOR_PRIMARY);
       doc.text(`${i + 1}`, colX[0] + colW[0] / 2, y + 1, { align: 'center' });
 
       doc.setFont(undefined, 'normal');
       doc.setTextColor(0, 0, 0);
-      const descLines = doc.splitTextToSize(m.descricao || '-', colW[1] - 4);
-      const actualRowH = Math.max(rowH, 5.5 * descLines.length + 3);
-      if (i % 2 === 0) {
-        doc.setFillColor(248, 250, 252);
-        doc.rect(M, y - 5, W - 2 * M, actualRowH, 'F');
-      }
       doc.text(descLines, colX[1] + 2, y + 1);
 
       doc.setFont(undefined, 'bold');
@@ -404,19 +403,19 @@ export async function generateReportPDF(report, data) {
       doc.setFontSize(8.5);
       doc.text(approved ? 'APROVADO' : 'REPROVADO', colX[4] + colW[4] / 2, y + 1, { align: 'center' });
       doc.setTextColor(0, 0, 0);
+      doc.setFontSize(9.5);
 
-      y += actualRowH;
+      y += rowH;
     }
 
     // Borda da tabela
     doc.setDrawColor(...COLOR_ACCENT);
     doc.setLineWidth(0.3);
-    const tableTop = y - 9 - (measurements.length * 8);
-    doc.rect(M, tableTop, W - 2 * M, y - 5 - tableTop);
+    doc.rect(M, tableTop, W - 2 * M, y - tableTop);
     // Linhas verticais separadoras
     doc.setLineWidth(0.2);
     for (let c = 1; c < colX.length; c++) {
-      doc.line(colX[c], tableTop, colX[c], y - 5);
+      doc.line(colX[c], tableTop, colX[c], y);
     }
 
     y += 4;
