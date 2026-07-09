@@ -447,31 +447,42 @@ export async function generateReportPDF(report, data) {
       const m = measurements[i];
       if (!m.fotos || m.fotos.length === 0) continue;
 
-      // Cabeçalho da medição (descrição, valor, status) numa linha
-      ensure(20);
+      // Cabeçalho da medição (empilhado verticalmente)
+      ensure(30);
       doc.setFontSize(11);
       doc.setFont(undefined, 'bold');
       doc.setTextColor(...COLOR_PRIMARY);
       doc.text(`Medição ${i + 1}`, M, y);
-      doc.setTextColor(0, 0, 0);
-      doc.setFont(undefined, 'normal');
-      doc.setFontSize(10);
+      y += 6;
       if (m.descricao) {
-        doc.text(`Local / Descrição: ${m.descricao}`, M + 22, y);
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(10);
+        doc.setTextColor(...COLOR_PRIMARY);
+        doc.text(`Local / Descrição: `, M, y);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(0, 0, 0);
+        doc.text(m.descricao, M + 35, y);
+        y += 6;
       }
       if (m.valor_medido != null) {
         const approved = (m.valor_medido ?? Infinity) <= lim;
-        doc.text(`Valor:`, W - M - 55, y);
-        doc.setFont(undefined, 'bold');
-        doc.text(`${m.valor_medido} Ohms`, W - M - 42, y);
         doc.setFont(undefined, 'normal');
-        doc.text(`Status:`, W - M - 28, y);
+        doc.setFontSize(10);
+        doc.setTextColor(...COLOR_PRIMARY);
+        doc.text(`Valor:`, M, y);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(0, 0, 0);
+        doc.text(`${m.valor_medido} Ohms`, M + 15, y);
+        y += 6;
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(...COLOR_PRIMARY);
+        doc.text(`Status:`, M, y);
         doc.setFont(undefined, 'bold');
         doc.setTextColor(...(approved ? COLOR_GREEN : COLOR_RED));
-        doc.text(approved ? 'APROVADO' : 'REPROVADO', W - M - 15, y);
+        doc.text(approved ? 'APROVADO' : 'REPROVADO', M + 15, y);
         doc.setTextColor(0, 0, 0);
+        y += 6;
       }
-      y += 6;
 
       // Fotos: uma por linha, maiores
       const pw = 120;
