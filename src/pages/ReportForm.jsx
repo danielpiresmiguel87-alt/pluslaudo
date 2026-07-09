@@ -150,16 +150,6 @@ export default function ReportForm() {
       </div>
 
       <Card>
-        <CardHeader><CardTitle>Identificação</CardTitle></CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div><Label>Equipamento</Label><Input value={form.equipamento} onChange={e => set('equipamento', e.target.value)} placeholder="Ex: MOINHO 02" /></div>
-          <div><Label>Tag do Equipamento</Label><Input value={form.tag_equipamento || ''} onChange={e => set('tag_equipamento', e.target.value)} placeholder="Ex: MQ-001" /></div>
-          <div><Label>Local</Label><Input value={form.local} onChange={e => set('local', e.target.value)} placeholder="Ex: Orleans / SC" /></div>
-          <div><Label>Data</Label><Input type="date" value={form.data || ''} onChange={e => set('data', e.target.value)} /></div>
-        </CardContent>
-      </Card>
-
-      <Card>
         <CardHeader><CardTitle>Partes Envolvidas</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -207,6 +197,16 @@ export default function ReportForm() {
               </SelectContent>
             </Select>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle>Identificação do Equipamento</CardTitle></CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div><Label>Equipamento</Label><Input value={form.equipamento} onChange={e => set('equipamento', e.target.value)} placeholder="Ex: MOINHO 02" /></div>
+          <div><Label>Tag do Equipamento</Label><Input value={form.tag_equipamento || ''} onChange={e => set('tag_equipamento', e.target.value)} placeholder="Ex: MQ-001" /></div>
+          <div><Label>Local</Label><Input value={form.local} onChange={e => set('local', e.target.value)} placeholder="Ex: Orleans / SC" /></div>
+          <div><Label>Data</Label><Input type="date" value={form.data || ''} onChange={e => set('data', e.target.value)} /></div>
         </CardContent>
       </Card>
 
