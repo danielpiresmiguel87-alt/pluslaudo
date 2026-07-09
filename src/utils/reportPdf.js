@@ -511,7 +511,7 @@ export async function generateReportPDF(report, data) {
   para(report.recomendacoes);
 
   // ── ASSINATURAS ──
-  ensure(45);
+  ensure(55);
   y += 12;
   doc.setDrawColor(80);
   doc.setLineWidth(0.4);
@@ -530,6 +530,29 @@ export async function generateReportPDF(report, data) {
   doc.text('Representante Legal', W - M - 75, sigY + 10);
   if (engineer?.crea_sc) {
     doc.text(`CREA-SC: ${engineer.crea_sc}`, M, sigY + 15);
+  }
+  if (company?.cnpj) {
+    doc.text(`CNPJ: ${company.cnpj}`, W - M - 75, sigY + 15);
+  }
+  doc.setTextColor(0, 0, 0);
+
+  // Assinatura do cliente/contratante
+  y = sigY + 24;
+  ensure(30);
+  doc.setDrawColor(80);
+  doc.setLineWidth(0.4);
+  const clientSigY = y + 20;
+  doc.line((W / 2) - 37, clientSigY, (W / 2) + 37, clientSigY);
+  doc.setFontSize(10);
+  doc.setFont(undefined, 'bold');
+  doc.setTextColor(...COLOR_PRIMARY);
+  doc.text(client?.razao_social || '_______________________________', W / 2, clientSigY + 5, { align: 'center' });
+  doc.setFont(undefined, 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(...COLOR_GRAY);
+  doc.text('Cliente / Contratante', W / 2, clientSigY + 10, { align: 'center' });
+  if (client?.cnpj) {
+    doc.text(`CNPJ: ${client.cnpj}`, W / 2, clientSigY + 15, { align: 'center' });
   }
   doc.setTextColor(0, 0, 0);
 
