@@ -32,7 +32,7 @@ export default function Layout() {
         {company?.logo_url ? (
           <img src={company.logo_url} alt="PLUSSEG" className="h-12 object-contain" />
         ) : (
-          <span className="text-xl font-bold">PLUSSEG</span>
+          <span className="text-xl font-bold">PISON MEGAWATT</span>
         )}
         <p className="text-xs text-muted-foreground mt-1">Gestão de Laudos</p>
       </div>
@@ -76,7 +76,7 @@ export default function Layout() {
       <div className="lg:pl-64">
         <header className="lg:hidden flex items-center justify-between p-4 border-b bg-background sticky top-0 z-40">
           <Button variant="ghost" size="icon" onClick={() => setOpen(true)}><Menu className="h-5 w-5" /></Button>
-          <span className="font-bold">PLUSSEG</span>
+          <span className="font-bold">PISON MEGAWATT</span>
         </header>
         <main className="p-4 lg:p-8">
           <Outlet />
