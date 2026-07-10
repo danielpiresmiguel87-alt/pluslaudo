@@ -127,14 +127,19 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = (shouldRedirect = true) => {
+  const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
-    
-    if (shouldRedirect) {
-      // Clear the session via SDK (handles server-side cookie/session) then redirect to login
-      base44.auth.logout('/login');
+    setAuthChecked(false);
+    // Clear the stored token so the app doesn't re-authenticate on reload
+    try {
+      localStorage.removeItem('base44_access_token');
+      localStorage.removeItem('token');
+    } catch (e) {
+      console.error('Failed to clear token:', e);
     }
+    // Hard redirect to login — ensures a clean state
+    window.location.href = '/login';
   };
 
   const navigateToLogin = () => {
