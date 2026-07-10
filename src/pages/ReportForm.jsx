@@ -302,7 +302,7 @@ export default function ReportForm() {
           </div>
           <div>
             <div className="flex items-center justify-between">
-              <Label>Eletricista (Executor)</Label>
+              <Label>Responsável pela medição</Label>
               <Button type="button" variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => setShowElectricianDialog(true)}>
                 <Plus className="h-3 w-3 mr-1" /> Novo
               </Button>
