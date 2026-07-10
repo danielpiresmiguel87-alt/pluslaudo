@@ -132,15 +132,15 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false);
     
     if (shouldRedirect) {
-      // Clear token and hard-redirect to login
+      // Clear stored tokens manually to ensure they're gone
       try {
-        base44.auth.logout();
+        localStorage.removeItem('base44_access_token');
+        localStorage.removeItem('token');
       } catch (e) {
-        console.error('Logout error:', e);
+        console.error('Token cleanup error:', e);
       }
-      window.location.href = '/login';
-    } else {
-      base44.auth.logout();
+      // Hard redirect to root — AuthContext will detect no token and redirect to login
+      window.location.href = '/';
     }
   };
 
