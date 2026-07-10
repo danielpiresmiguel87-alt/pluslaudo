@@ -19,7 +19,7 @@ import Settings from '@/pages/Settings';
 import AssinaturaCliente from '@/pages/AssinaturaCliente';
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, navigateToLogin } = useAuth();
   const location = useLocation();
 
   // Página pública de assinatura — não requer login
@@ -38,6 +38,12 @@ const AuthenticatedApp = () => {
         <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
       </div>
     );
+  }
+
+  // No token and no auth error means user is not logged in — redirect to login
+  if (!isAuthenticated && !authError) {
+    navigateToLogin();
+    return null;
   }
 
   // Handle authentication errors

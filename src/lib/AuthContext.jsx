@@ -95,16 +95,16 @@ export const AuthProvider = ({ children }) => {
       setIsLoadingAuth(true);
       const currentUser = await base44.auth.me();
       
-      // auth.me() may not return custom fields like role — fetch full record
-      if (currentUser && currentUser.id && !currentUser.role) {
-        try {
-          const fullUser = await base44.entities.User.get(currentUser.id);
-          if (fullUser) {
-            currentUser.role = fullUser.role;
-          }
-        } catch (e) {
-          console.warn('Could not fetch full user record:', e);
+      // auth.me() doesn't return custom fields like role — use the backend function
+      // which is proven to return the correct role
+      try {
+        const res = await base44.functions.invoke('getUserRole', {});
+        const role = res?.data?.role || res?.role;
+        if (role) {
+          currentUser.role = role;
         }
+      } catch (e) {
+        console.warn('Could not fetch user role:', e);
       }
       
       setUser(currentUser);
@@ -130,17 +130,19 @@ export const AuthProvider = ({ children }) => {
   const logout = (shouldRedirect = true) => {
     setUser(null);
     setIsAuthenticated(false);
+    setAuthChecked(false);
+    setIsLoadingAuth(true);
     
     if (shouldRedirect) {
-      // Clear stored tokens manually to ensure they're gone
+      // Clear stored tokens, then redirect to the platform login page
       try {
         localStorage.removeItem('base44_access_token');
         localStorage.removeItem('token');
       } catch (e) {
         console.error('Token cleanup error:', e);
       }
-      // Hard redirect to root — AuthContext will detect no token and redirect to login
-      window.location.href = '/';
+      // Use the SDK's redirect to login — goes to the external login page
+      base44.auth.redirectToLogin('/');
     }
   };
 
