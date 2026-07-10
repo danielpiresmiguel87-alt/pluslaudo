@@ -128,18 +128,15 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    setUser(null);
-    setIsAuthenticated(false);
-    setAuthChecked(false);
-    // Clear the stored token so the app doesn't re-authenticate on reload
+    // Clear localStorage tokens
     try {
       localStorage.removeItem('base44_access_token');
       localStorage.removeItem('token');
     } catch (e) {
-      console.error('Failed to clear token:', e);
+      console.error('Failed to clear tokens:', e);
     }
-    // Hard redirect to login — ensures a clean state
-    window.location.href = '/login';
+    // Hit the server-side logout endpoint to clear HTTP-only cookies, then redirect to /login
+    window.location.href = `/api/apps/auth/logout?from_url=${encodeURIComponent('/login')}`;
   };
 
   const navigateToLogin = () => {
