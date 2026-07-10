@@ -58,7 +58,14 @@ export default function ReportList({ reports, clients, onNavigate }) {
             <CardContent className="pt-4 pb-4">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="min-w-0">
-                  <p className="font-medium truncate">{r.equipamento || 'Sem equipamento'}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium truncate">{r.equipamento || 'Sem equipamento'}</p>
+                    {r.tag_equipamento && (
+                      <Badge variant="outline" className="text-xs font-mono shrink-0">
+                        TAG: {r.tag_equipamento}
+                      </Badge>
+                    )}
+                  </div>
                   <p className="text-sm text-muted-foreground">
                     {r.local}{r.data ? ` - ${new Date(r.data).toLocaleDateString('pt-BR')}` : ''}
                   </p>
