@@ -17,16 +17,31 @@ import Electricians from '@/pages/Electricians';
 import Instruments from '@/pages/Instruments';
 import Settings from '@/pages/Settings';
 import AssinaturaCliente from '@/pages/AssinaturaCliente';
+import Login from '@/pages/Login';
+import Register from '@/pages/Register';
+import ForgotPassword from '@/pages/ForgotPassword';
+import ResetPassword from '@/pages/ResetPassword';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, navigateToLogin } = useAuth();
   const location = useLocation();
 
-  // Página pública de assinatura — não requer login
+  // Páginas públicas — não requerem login
   if (location.pathname.startsWith('/assinatura/')) {
     return (
       <Routes>
         <Route path="/assinatura/:token" element={<AssinaturaCliente />} />
+      </Routes>
+    );
+  }
+
+  if (location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/forgot-password' || location.pathname.startsWith('/reset-password')) {
+    return (
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
       </Routes>
     );
   }
