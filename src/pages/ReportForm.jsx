@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import MeasurementEditor from '@/components/report/MeasurementEditor';
 import EnvironmentConditions from '@/components/report/EnvironmentConditions';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ArrowLeft, Save, Plus, Search, Send, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Search, Send, CheckCircle, Clock, Check } from 'lucide-react';
 import {
   carregarRascunho,
   salvarRascunho,
@@ -57,6 +57,7 @@ export default function ReportForm() {
   const [showInstrumentDialog, setShowInstrumentDialog] = useState(false);
   const [instrumentForm, setInstrumentForm] = useState({ marca_modelo: '', numero_serie: '', data_calibracao: '', especificacoes: '' });
   const [currentUser, setCurrentUser] = useState(null);
+  const [draftSaved, setDraftSaved] = useState(false);
 
   const handleClientCnpjLookup = async () => {
     const cnpj = (clientForm.cnpj || '').replace(/\D/g, '');
@@ -105,13 +106,49 @@ export default function ReportForm() {
 
   // Auto-save rascunho
   useEffect(() => {
-    if (!loading) salvarRascunho(draftKey, form);
+    if (!loading) {
+      salvarRascunho(draftKey, form);
+      setDraftSaved(true);
+      const t = setTimeout(() => setDraftSaved(false), 2000);
+      return () => clearTimeout(t);
+    }
   }, [form, draftKey, loading]);
 
   // Bloqueia saída acidental quando há dados
   useBloquearSaida(!saving && (!!form.equipamento || !!form.cliente_id || (form.measurements?.length > 0)));
 
   const set = (field, value) => setForm(f => ({ ...f, [field]: value }));
+
+  // Salvar como rascunho no servidor e continuar editando
+  const handleSaveDraft = async () => {
+    if (!garantirConexao()) return;
+    setSaving(true);
+    try {
+      const measurements = form.measurements || [];
+      const updatedMeasurements = measurements.map(m => ({
+        ...m,
+        fotos: (m.fotos || []).map(f => typeof f === 'string' ? f : (f.url || f)),
+      }));
+      const lim = form.limite_ohms || 10;
+      const status = updatedMeasurements.length === 0 ? 'rascunho' :
+        updatedMeasurements.every(m => (m.valor_medido ?? Infinity) <= lim) ? 'aprovado' : 'reprovado';
+      const validade = form.data ? new Date(new Date(form.data).getTime() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : undefined;
+      const payload = { ...form, condicoes_ambiente: formatEnvironmentConditions(form.condicoes_ambiente) || undefined, measurements: updatedMeasurements, status, validade, workflow_status: form.workflow_status || 'rascunho' };
+      if (isNew) {
+        const created = await base44.entities.Report.create(payload);
+        limparRascunho(draftKey);
+        navigate(`/reports/${created.id}/edit`);
+      } else {
+        await base44.entities.Report.update(id, payload);
+        limparRascunho(draftKey);
+      }
+      setDraftSaved(true);
+      setTimeout(() => setDraftSaved(false), 3000);
+    } catch (e) {
+      alert('Erro ao salvar rascunho: ' + e.message);
+    }
+    setSaving(false);
+  };
 
   const userRole = currentUser?.role;
   const canEditFull = userRole === 'admin' || userRole === 'coordenador';
@@ -206,18 +243,28 @@ export default function ReportForm() {
             <MeasurementEditor measurements={form.measurements || []} limite={form.limite_ohms || 10} onChange={m => set('measurements', m)} />
           </CardContent>
         </Card>
-        <Button onClick={() => handleSave('pendente_revisao')} disabled={saving} size="lg">
-          <CheckCircle className="h-4 w-4 mr-2" /> {saving ? 'Enviando...' : 'Concluir Medições'}
-        </Button>
+        <div className="flex gap-3 flex-wrap">
+          <Button onClick={() => handleSave('pendente_medicao')} disabled={saving} variant="outline" size="lg">
+            <Save className="h-4 w-4 mr-2" /> {saving ? 'Salvando...' : 'Salvar e Continuar Depois'}
+          </Button>
+          <Button onClick={() => handleSave('pendente_revisao')} disabled={saving} size="lg">
+            <CheckCircle className="h-4 w-4 mr-2" /> {saving ? 'Enviando...' : 'Concluir Medições'}
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}><ArrowLeft className="h-5 w-5" /></Button>
-        <h1 className="text-2xl font-bold">{isNew ? 'Novo Laudo' : 'Editar Laudo'}</h1>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}><ArrowLeft className="h-5 w-5" /></Button>
+          <h1 className="text-2xl font-bold">{isNew ? 'Novo Laudo' : 'Editar Laudo'}</h1>
+        </div>
+        <span className="text-xs text-muted-foreground flex items-center gap-1">
+          <Clock className="h-3 w-3" /> {draftSaved ? 'Salvando...' : 'Rascunho salvo automaticamente'}
+        </span>
       </div>
 
       <Card>
@@ -327,16 +374,24 @@ export default function ReportForm() {
         </CardContent>
       </Card>
 
-      <div className="flex gap-3 flex-wrap">
+      <div className="flex gap-3 flex-wrap items-center">
         <Button onClick={() => handleSave()} disabled={saving}>
           <Save className="h-4 w-4 mr-2" /> {saving ? 'Salvando...' : 'Salvar Laudo'}
+        </Button>
+        <Button onClick={handleSaveDraft} disabled={saving} variant="outline">
+          <Save className="h-4 w-4 mr-2" /> {saving ? 'Salvando...' : 'Salvar Rascunho'}
         </Button>
         {canEditFull && (
           <Button onClick={() => handleSave('pendente_medicao')} disabled={saving} variant="secondary">
             <Send className="h-4 w-4 mr-2" /> {saving ? 'Enviando...' : 'Enviar para Eletricista'}
           </Button>
         )}
-        <Button variant="outline" onClick={() => navigate(-1)}>Cancelar</Button>
+        <Button variant="ghost" onClick={() => navigate(-1)}>Cancelar</Button>
+        {draftSaved && (
+          <span className="text-xs text-green-600 flex items-center gap-1 ml-auto">
+            <Check className="h-3 w-3" /> Rascunho salvo
+          </span>
+        )}
       </div>
 
       <Dialog open={showClientDialog} onOpenChange={setShowClientDialog}>
