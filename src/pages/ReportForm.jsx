@@ -386,7 +386,7 @@ export default function ReportForm() {
             <Send className="h-4 w-4 mr-2" /> {saving ? 'Enviando...' : 'Enviar para Eletricista'}
           </Button>
         )}
-        <Button variant="ghost" onClick={() => navigate(-1)}>Cancelar</Button>
+        <Button variant="ghost" onClick={() => navigate(isNew ? '/' : `/reports/${id}`)}>Cancelar</Button>
         {draftSaved && (
           <span className="text-xs text-green-600 flex items-center gap-1 ml-auto">
             <Check className="h-3 w-3" /> Rascunho salvo
