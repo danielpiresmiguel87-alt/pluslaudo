@@ -277,6 +277,7 @@ export default function ReportView() {
 
       <Section title="Identificação">
         <InfoRow label="Equipamento" value={report.equipamento} />
+        <InfoRow label="TAG" value={report.tag_equipamento} />
         <InfoRow label="Local" value={report.local} />
         <InfoRow label="Data" value={report.data ? new Date(report.data).toLocaleDateString('pt-BR') : ''} />
       </Section>
