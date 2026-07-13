@@ -349,7 +349,7 @@ export default function ReportForm() {
           <div><Label>Número da ART</Label><Input value={form.numero_art || ''} onChange={e => set('numero_art', e.target.value)} /></div>
           <div><Label>Normas e Referências</Label><Textarea value={form.normas || ''} onChange={e => set('normas', e.target.value)} rows={2} /></div>
           <div><Label className="mb-1 block">Condições do Ambiente e Clima</Label>
-          <EnvironmentConditions value={form.condicoes_ambiente} onChange={obj => set('condicoes_ambiente', obj)} location={form.local} /></div>
+          <EnvironmentConditions value={form.condicoes_ambiente} onChange={obj => set('condicoes_ambiente', obj)} location={form.local} autoFetch={isNew} /></div>
           <div><Label>Limitações do Ensaio</Label><Textarea value={form.limitacoes || ''} onChange={e => set('limitacoes', e.target.value)} rows={3} placeholder="Interferências, condições que afetaram a medição..." /></div>
         </CardContent>
       </Card>
