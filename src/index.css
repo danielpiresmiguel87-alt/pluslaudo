@@ -93,7 +93,8 @@
 
 @media print {
   @page {
-    margin: 12mm;
+    margin: 10mm;
+    size: A4;
   }
 
   * {
@@ -113,6 +114,11 @@
     display: none !important;
   }
 
+  /* Iframe sempre escondido no print */
+  iframe {
+    display: none !important;
+  }
+
   /* Remove padding lateral do layout com sidebar */
   .lg\:pl-64 {
     padding-left: 0 !important;
@@ -122,16 +128,31 @@
     padding: 0 !important;
   }
 
-  /* Cards: mantém bordas e fundo na impressão */
-  [class*="rounded-xl"] {
-    box-shadow: none !important;
+  /* Reduz margens grandes */
+  .mt-6 { margin-top: 2px !important; }
+  .mt-12 { margin-top: 8px !important; }
+  .mb-4 { margin-bottom: 4px !important; }
+
+  /* Canvas: max-width e page-break-inside avoid por página */
+  canvas {
+    max-width: 100% !important;
+    page-break-inside: avoid;
     break-inside: avoid;
   }
 
-  /* Evita quebra de página dentro de seções */
-  section,
-  [class*="rounded-xl"] > div {
+  /* Container do PDF permite quebra entre páginas */
+  .pdf-viewer-container {
+    page-break-inside: auto;
+    break-inside: auto;
+  }
+  .pdf-page-container {
+    page-break-inside: avoid;
     break-inside: avoid;
+  }
+
+  /* Rodapé: page-break-before avoid */
+  footer {
+    page-break-before: avoid;
   }
 
   /* Imagens não ultrapassam a página */

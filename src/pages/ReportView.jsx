@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Pencil, Download, Printer, CheckCircle, Upload, FileText, Save, PenLine, Mail, CheckCheck, Copy, Share2 } from 'lucide-react';
 import { generateReportPDF } from '@/utils/reportPdf';
 import SignaturePad from '@/components/report/SignaturePad';
+import PdfViewer from '@/components/report/PdfViewer';
 import { formatEnvironmentConditions } from '@/utils/environment';
 
 export default function ReportView() {
@@ -141,6 +142,10 @@ export default function ReportView() {
   }[ws];
 
   const handleConcluir = async () => {
+    if (!report.art_documento_url) {
+      alert('É obrigatório anexar o documento da ART antes de concluir o laudo.');
+      return;
+    }
     await base44.entities.Report.update(id, { workflow_status: 'concluido' });
     setReport({ ...report, workflow_status: 'concluido' });
   };
@@ -350,11 +355,8 @@ export default function ReportView() {
             <>
               <InfoRow label="Número da ART" value={report.numero_art} />
               {report.art_documento_url ? (
-                <div className="flex items-center gap-2 mt-1">
-                  <FileText className="h-4 w-4 text-blue-500" />
-                  <a href={report.art_documento_url} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline">
-                    Visualizar documento da ART
-                  </a>
+                <div className="mt-3">
+                  <PdfViewer url={report.art_documento_url} />
                 </div>
               ) : (
                 <InfoRow label="Documento" value="Não anexado" />
