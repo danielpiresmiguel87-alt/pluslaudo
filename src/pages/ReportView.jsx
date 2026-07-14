@@ -94,7 +94,7 @@ export default function ReportView() {
     setExporting(true);
     try {
       const doc = await generateReportPDF(report, data);
-      doc.save(`Laudo-${report.equipamento || 'Aterramento'}.pdf`);
+      doc.save(`LAUDO DE ATERRAMENTO ${report.tag_equipamento || ''}`.trim() + '.pdf');
     } catch (e) { console.error(e); }
     setExporting(false);
   };
