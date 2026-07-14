@@ -36,8 +36,7 @@ export default function ReportForm() {
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [clients, setClients] = useState([]);
-  const [engineers, setEngineers] = useState([]);
-  const [electricians, setElectricians] = useState([]);
+  const [users, setUsers] = useState([]);
   const [instruments, setInstruments] = useState([]);
   const [form, setForm] = useState({
     equipamento: '', tag_equipamento: '', local: '', data: new Date().toISOString().split('T')[0],
@@ -50,10 +49,6 @@ export default function ReportForm() {
   const [showClientDialog, setShowClientDialog] = useState(false);
   const [clientForm, setClientForm] = useState({ razao_social: '', cnpj: '', endereco: '', cidade: '', cep: '', bairro: '', fone: '' });
   const [clientLookingUp, setClientLookingUp] = useState(false);
-  const [showEngineerDialog, setShowEngineerDialog] = useState(false);
-  const [engineerForm, setEngineerForm] = useState({ nome: '', cpf: '', crea_sc: '' });
-  const [showElectricianDialog, setShowElectricianDialog] = useState(false);
-  const [electricianForm, setElectricianForm] = useState({ nome: '', cpf: '', registro_profissional: '' });
   const [showInstrumentDialog, setShowInstrumentDialog] = useState(false);
   const [instrumentForm, setInstrumentForm] = useState({ marca_modelo: '', numero_serie: '', data_calibracao: '', especificacoes: '' });
   const [currentUser, setCurrentUser] = useState(null);
@@ -86,11 +81,10 @@ export default function ReportForm() {
     }
     Promise.all([
       base44.entities.Client.list(),
-      base44.entities.Engineer.list(),
-      base44.entities.Electrician.list(),
+      base44.entities.User.list(),
       base44.entities.Instrument.list(),
-    ]).then(([c, e, el, i]) => {
-      setClients(c); setEngineers(e); setElectricians(el); setInstruments(i);
+    ]).then(([c, u, i]) => {
+      setClients(c); setUsers(u); setInstruments(i);
     });
     if (!isNew && !draft) {
       base44.entities.Report.get(id).then(r => {
@@ -286,32 +280,22 @@ export default function ReportForm() {
             </Select>
           </div>
           <div>
-            <div className="flex items-center justify-between">
-              <Label>Engenheiro Responsável</Label>
-              <Button type="button" variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => setShowEngineerDialog(true)}>
-                <Plus className="h-3 w-3 mr-1" /> Novo
-              </Button>
-            </div>
+            <Label>Engenheiro Responsável</Label>
             <Select value={form.engenheiro_id || 'none'} onValueChange={v => set('engenheiro_id', v === 'none' ? '' : v)}>
               <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">—</SelectItem>
-                {engineers.map(e => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}
+                {users.filter(u => u.role === 'engenheiro').map(u => <SelectItem key={u.id} value={u.id}>{u.full_name || u.email}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
           <div>
-            <div className="flex items-center justify-between">
-              <Label>Responsável pela medição</Label>
-              <Button type="button" variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => setShowElectricianDialog(true)}>
-                <Plus className="h-3 w-3 mr-1" /> Novo
-              </Button>
-            </div>
+            <Label>Responsável pela medição</Label>
             <Select value={form.eletricista_id || 'none'} onValueChange={v => set('eletricista_id', v === 'none' ? '' : v)}>
               <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">—</SelectItem>
-                {electricians.map(e => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}
+                {users.filter(u => u.role === 'eletricista').map(u => <SelectItem key={u.id} value={u.id}>{u.full_name || u.email}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -430,56 +414,6 @@ export default function ReportForm() {
               setClientForm({ razao_social: '', cnpj: '', endereco: '', cidade: '', cep: '', bairro: '', fone: '' });
               setShowClientDialog(false);
             }}>Salvar Cliente</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={showEngineerDialog} onOpenChange={setShowEngineerDialog}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Cadastrar Novo Engenheiro</DialogTitle>
-          </DialogHeader>
-          <div className="grid grid-cols-1 gap-4 py-2">
-            <div><Label>Nome *</Label><Input value={engineerForm.nome} onChange={e => setEngineerForm(s => ({ ...s, nome: e.target.value }))} /></div>
-            <div><Label>CPF</Label><Input value={engineerForm.cpf} onChange={e => setEngineerForm(s => ({ ...s, cpf: e.target.value }))} /></div>
-            <div><Label>CREA-SC</Label><Input value={engineerForm.crea_sc} onChange={e => setEngineerForm(s => ({ ...s, crea_sc: e.target.value }))} /></div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEngineerDialog(false)}>Cancelar</Button>
-            <Button onClick={async () => {
-              if (!engineerForm.nome) return;
-              if (!garantirConexao()) return;
-              const created = await base44.entities.Engineer.create(engineerForm);
-              setEngineers(s => [...s, created]);
-              set('engenheiro_id', created.id);
-              setEngineerForm({ nome: '', cpf: '', crea_sc: '' });
-              setShowEngineerDialog(false);
-            }}>Salvar Engenheiro</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={showElectricianDialog} onOpenChange={setShowElectricianDialog}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Cadastrar Novo Eletricista</DialogTitle>
-          </DialogHeader>
-          <div className="grid grid-cols-1 gap-4 py-2">
-            <div><Label>Nome *</Label><Input value={electricianForm.nome} onChange={e => setElectricianForm(s => ({ ...s, nome: e.target.value }))} /></div>
-            <div><Label>CPF</Label><Input value={electricianForm.cpf} onChange={e => setElectricianForm(s => ({ ...s, cpf: e.target.value }))} /></div>
-            <div><Label>Registro Profissional</Label><Input value={electricianForm.registro_profissional} onChange={e => setElectricianForm(s => ({ ...s, registro_profissional: e.target.value }))} /></div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowElectricianDialog(false)}>Cancelar</Button>
-            <Button onClick={async () => {
-              if (!electricianForm.nome) return;
-              if (!garantirConexao()) return;
-              const created = await base44.entities.Electrician.create(electricianForm);
-              setElectricians(s => [...s, created]);
-              set('eletricista_id', created.id);
-              setElectricianForm({ nome: '', cpf: '', registro_profissional: '' });
-              setShowElectricianDialog(false);
-            }}>Salvar Eletricista</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

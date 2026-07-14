@@ -45,18 +45,25 @@ Deno.serve(async (req) => {
     }
 
     // Ação: obter dados do laudo (default)
-    const [companies, clients, engineers, electricians, instruments] = await Promise.all([
+    const [companies, clients, engineers, electricians, instruments, users] = await Promise.all([
       base44.asServiceRole.entities.Company.list(),
       base44.asServiceRole.entities.Client.list(),
       base44.asServiceRole.entities.Engineer.list(),
       base44.asServiceRole.entities.Electrician.list(),
       base44.asServiceRole.entities.Instrument.list(),
+      base44.asServiceRole.entities.User.list(),
     ]);
 
     const client = clients.find(c => c.id === report.cliente_id);
     const company = companies[0];
-    const engineer = engineers.find(e => e.id === report.engenheiro_id);
-    const electrician = electricians.find(e => e.id === report.eletricista_id);
+    const engUser = users.find(u => u.id === report.engenheiro_id);
+    const eleUser = users.find(u => u.id === report.eletricista_id);
+    const engineer = engUser
+      ? { nome: engUser.full_name || engUser.email, cpf: engUser.cpf, crea_sc: engUser.crea_sc }
+      : engineers.find(e => e.id === report.engenheiro_id);
+    const electrician = eleUser
+      ? { nome: eleUser.full_name || eleUser.email, cpf: eleUser.cpf, registro_profissional: eleUser.registro_profissional }
+      : electricians.find(e => e.id === report.eletricista_id);
     const instrument = instruments.find(i => i.id === report.instrumento_id);
 
     return Response.json({

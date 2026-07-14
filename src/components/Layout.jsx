@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
-import { FileText, Users, HardHat, Wrench, Gauge, Settings, Menu, LogOut } from 'lucide-react';
+import { FileText, Briefcase, Users, Gauge, Settings, Menu, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function Layout() {
@@ -22,13 +22,16 @@ export default function Layout() {
   ];
   if (canManage) {
     navItems.push(
-      { to: '/clients', label: 'Clientes', icon: Users },
-      { to: '/engineers', label: 'Engenheiros', icon: HardHat },
-      { to: '/electricians', label: 'Eletricistas', icon: Wrench },
+      { to: '/clients', label: 'Clientes', icon: Briefcase },
       { to: '/instruments', label: 'Instrumentos', icon: Gauge },
     );
   }
-  if (isAdmin) navItems.push({ to: '/settings', label: 'Configurações', icon: Settings });
+  if (isAdmin) {
+    navItems.push(
+      { to: '/users', label: 'Usuários', icon: Users },
+      { to: '/settings', label: 'Configurações', icon: Settings },
+    );
+  }
 
   const handleLogout = () => logout();
 

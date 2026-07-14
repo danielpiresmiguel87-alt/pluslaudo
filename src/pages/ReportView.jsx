@@ -36,18 +36,25 @@ export default function ReportView() {
     (async () => {
       const r = await base44.entities.Report.get(id);
       setReport(r);
-      const [companies, clients, engineers, electricians, instruments] = await Promise.all([
+      const [companies, clients, engineers, electricians, instruments, users] = await Promise.all([
         base44.entities.Company.list(),
         base44.entities.Client.list(),
         base44.entities.Engineer.list(),
         base44.entities.Electrician.list(),
         base44.entities.Instrument.list(),
+        base44.entities.User.list(),
       ]);
+      const engUser = users.find(u => u.id === r.engenheiro_id);
+      const eleUser = users.find(u => u.id === r.eletricista_id);
       setData({
         company: companies[0],
         client: clients.find(c => c.id === r.cliente_id),
-        engineer: engineers.find(e => e.id === r.engenheiro_id),
-        electrician: electricians.find(e => e.id === r.eletricista_id),
+        engineer: engUser
+          ? { nome: engUser.full_name || engUser.email, cpf: engUser.cpf, crea_sc: engUser.crea_sc }
+          : engineers.find(e => e.id === r.engenheiro_id),
+        electrician: eleUser
+          ? { nome: eleUser.full_name || eleUser.email, cpf: eleUser.cpf, registro_profissional: eleUser.registro_profissional }
+          : electricians.find(e => e.id === r.eletricista_id),
         instrument: instruments.find(i => i.id === r.instrumento_id),
       });
     })();

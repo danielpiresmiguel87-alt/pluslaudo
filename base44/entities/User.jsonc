@@ -6,11 +6,20 @@
       "enum": [
         "admin",
         "coordenador",
-        "eletricista",
         "engenheiro",
+        "eletricista",
         "user"
       ],
       "default": "user"
+    },
+    "cpf": {
+      "type": "string"
+    },
+    "crea_sc": {
+      "type": "string"
+    },
+    "registro_profissional": {
+      "type": "string"
     }
   },
   "required": [

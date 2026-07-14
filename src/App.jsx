@@ -12,9 +12,8 @@ import Home from '@/pages/Home';
 import ReportForm from '@/pages/ReportForm';
 import ReportView from '@/pages/ReportView';
 import Clients from '@/pages/Clients';
-import Engineers from '@/pages/Engineers';
-import Electricians from '@/pages/Electricians';
 import Instruments from '@/pages/Instruments';
+import UsersPage from '@/pages/Users';
 import Settings from '@/pages/Settings';
 import AssinaturaCliente from '@/pages/AssinaturaCliente';
 import Login from '@/pages/Login';
@@ -81,8 +80,7 @@ const AuthenticatedApp = () => {
         <Route path="/reports/:id/edit" element={<ReportForm />} />
         <Route path="/reports/:id" element={<ReportView />} />
         <Route path="/clients" element={<Clients />} />
-        <Route path="/engineers" element={<Engineers />} />
-        <Route path="/electricians" element={<Electricians />} />
+        <Route path="/users" element={<UsersPage />} />
         <Route path="/instruments" element={<Instruments />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
