@@ -1,0 +1,33 @@
+{
+  "name": "Risco",
+  "type": "object",
+  "properties": {
+    "maquina_id": {
+      "type": "string"
+    },
+    "local": {
+      "type": "string"
+    },
+    "alvo": {
+      "type": "string"
+    },
+    "tarefa": {
+      "type": "string"
+    },
+    "hrn_valor": {
+      "type": "number"
+    },
+    "hrn_classificacao": {
+      "type": "string"
+    },
+    "descricao": {
+      "type": "string"
+    },
+    "categoria": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "maquina_id"
+  ]
+}

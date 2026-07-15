@@ -1,0 +1,41 @@
+{
+  "name": "Projeto",
+  "type": "object",
+  "properties": {
+    "numero": {
+      "type": "string"
+    },
+    "cliente": {
+      "type": "string"
+    },
+    "empresa_emissora": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Em Andamento",
+        "Conclu\u00eddo",
+        "Cancelado"
+      ],
+      "default": "Em Andamento"
+    },
+    "engenheiro_responsavel": {
+      "type": "string"
+    },
+    "data_inicio": {
+      "type": "string",
+      "format": "date"
+    },
+    "data_conclusao": {
+      "type": "string",
+      "format": "date"
+    },
+    "observacoes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "numero"
+  ]
+}

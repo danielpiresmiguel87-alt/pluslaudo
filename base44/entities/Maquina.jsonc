@@ -1,0 +1,205 @@
+{
+  "name": "Maquina",
+  "type": "object",
+  "properties": {
+    "id_gautica": {
+      "type": "string"
+    },
+    "cliente": {
+      "type": "string"
+    },
+    "empresa_emissora": {
+      "type": "string"
+    },
+    "setor": {
+      "type": "string"
+    },
+    "numero_projeto": {
+      "type": "string"
+    },
+    "ultima_revisao": {
+      "type": "string",
+      "format": "date"
+    },
+    "tipo_equipamento": {
+      "type": "string"
+    },
+    "capacidade": {
+      "type": "string"
+    },
+    "peso": {
+      "type": "string"
+    },
+    "fabricante": {
+      "type": "string"
+    },
+    "grupo": {
+      "type": "string"
+    },
+    "numero_serie": {
+      "type": "string"
+    },
+    "numero_patrimonio_tag": {
+      "type": "string"
+    },
+    "ano_fabricacao": {
+      "type": "number"
+    },
+    "data_fabricacao": {
+      "type": "string",
+      "format": "date"
+    },
+    "ano_fabricacao_desconhecido": {
+      "type": "boolean"
+    },
+    "abastecimento": {
+      "type": "string",
+      "enum": [
+        "AUTOM\u00c1TICO",
+        "MANUAL",
+        "SEMI-AUTOM\u00c1TICO"
+      ]
+    },
+    "processo": {
+      "type": "string",
+      "enum": [
+        "AUTOM\u00c1TICO",
+        "MANUAL",
+        "SEMI-AUTOM\u00c1TICO"
+      ]
+    },
+    "descarga": {
+      "type": "string",
+      "enum": [
+        "AUTOM\u00c1TICO",
+        "MANUAL",
+        "SEMI-AUTOM\u00c1TICO"
+      ]
+    },
+    "energia_eletrica": {
+      "type": "boolean"
+    },
+    "energia_eletrica_tensao": {
+      "type": "string"
+    },
+    "energia_pneumatica": {
+      "type": "boolean"
+    },
+    "energia_pneumatica_pressao": {
+      "type": "string"
+    },
+    "energia_mecanica": {
+      "type": "boolean"
+    },
+    "energia_mecanica_forca": {
+      "type": "string"
+    },
+    "energia_hidraulica": {
+      "type": "boolean"
+    },
+    "energia_hidraulica_pressao": {
+      "type": "string"
+    },
+    "energia_radioativa": {
+      "type": "boolean"
+    },
+    "energia_radioativa_radiacao": {
+      "type": "string"
+    },
+    "energia_quimica": {
+      "type": "boolean"
+    },
+    "energia_quimica_volume": {
+      "type": "string"
+    },
+    "energia_termica": {
+      "type": "boolean"
+    },
+    "energia_termica_valor": {
+      "type": "string"
+    },
+    "principais_sistemas_dispositivos": {
+      "type": "string"
+    },
+    "utilizacao_equipamento": {
+      "type": "string"
+    },
+    "manutencao_mecanica": {
+      "type": "string"
+    },
+    "habilidades_manutencao_mecanica": {
+      "type": "string"
+    },
+    "manutencao_eletrica": {
+      "type": "string"
+    },
+    "habilidades_manutencao_eletrica": {
+      "type": "string"
+    },
+    "operadores": {
+      "type": "string"
+    },
+    "habilidades_operadores": {
+      "type": "string"
+    },
+    "pessoas_acompanharam": {
+      "type": "string"
+    },
+    "limite_transporte": {
+      "type": "boolean"
+    },
+    "limite_montagem": {
+      "type": "boolean"
+    },
+    "limite_instalacao": {
+      "type": "boolean"
+    },
+    "limite_producao": {
+      "type": "boolean"
+    },
+    "limite_manutencao": {
+      "type": "boolean"
+    },
+    "limite_desmontagem": {
+      "type": "boolean"
+    },
+    "limite_sucateamento": {
+      "type": "boolean"
+    },
+    "limite_higienizacao": {
+      "type": "boolean"
+    },
+    "conclusao_analise": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Ativo",
+        "Exclu\u00eddo"
+      ],
+      "default": "Ativo"
+    },
+    "foto_geral": {
+      "type": "string"
+    },
+    "foto_frontal": {
+      "type": "string"
+    },
+    "foto_esquerda": {
+      "type": "string"
+    },
+    "foto_direita": {
+      "type": "string"
+    },
+    "foto_traseira": {
+      "type": "string"
+    },
+    "foto_placa": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "cliente"
+  ]
+}

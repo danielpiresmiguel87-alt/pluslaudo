@@ -20,6 +20,9 @@ import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
+import Nr12Dashboard from '@/pages/nr12/Dashboard';
+import Nr12Maquinas from '@/pages/nr12/MaquinasList';
+import Nr12MaquinaForm from '@/pages/nr12/MaquinaForm';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, navigateToLogin } = useAuth();
@@ -83,6 +86,10 @@ const AuthenticatedApp = () => {
         <Route path="/users" element={<UsersPage />} />
         <Route path="/instruments" element={<Instruments />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/nr12" element={<Nr12Dashboard />} />
+        <Route path="/nr12/maquinas" element={<Nr12Maquinas />} />
+        <Route path="/nr12/maquinas/new" element={<Nr12MaquinaForm />} />
+        <Route path="/nr12/maquinas/:id/edit" element={<Nr12MaquinaForm />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
