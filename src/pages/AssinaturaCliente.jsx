@@ -174,12 +174,12 @@ export default function AssinaturaCliente() {
             <div><span className="font-bold" style={{ color: C.primary }}>Limite:</span> {r.limite_ohms || 10} Ω</div>
           </div>
           <MeasurementEditor measurements={editableMeasurements} limite={r.limite_ohms || 10} onChange={setEditableMeasurements} />
-          <div className="flex gap-3">
-            <Button onClick={handleSaveDraft} disabled={savingMeas} variant="outline" size="lg" className="flex-1">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button onClick={handleSaveDraft} disabled={savingMeas} variant="outline" size="lg" className="flex-1 w-full sm:w-auto">
               <Save className="h-4 w-4 mr-2" />
               {savingMeas ? 'Salvando...' : 'Salvar e Continuar Depois'}
             </Button>
-            <Button onClick={handleSaveMeasurements} disabled={savingMeas} size="lg" className="flex-1">
+            <Button onClick={handleSaveMeasurements} disabled={savingMeas} size="lg" className="flex-1 w-full sm:w-auto">
               <CheckCircle className="h-4 w-4 mr-2" />
               {savingMeas ? 'Enviando...' : 'Concluir Medições'}
             </Button>
