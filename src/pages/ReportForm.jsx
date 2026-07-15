@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import MeasurementEditor from '@/components/report/MeasurementEditor';
 import EnvironmentConditions from '@/components/report/EnvironmentConditions';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ArrowLeft, Save, Plus, Search, Send, CheckCircle, Clock, Check } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Search, Send, CheckCircle, Clock, Check, Upload, FileText, Loader2 } from 'lucide-react';
 import {
   carregarRascunho,
   salvarRascunho,
@@ -55,6 +55,7 @@ export default function ReportForm() {
   const [instrumentForm, setInstrumentForm] = useState({ marca_modelo: '', numero_serie: '', data_calibracao: '', especificacoes: '' });
   const [currentUser, setCurrentUser] = useState(null);
   const [draftSaved, setDraftSaved] = useState(false);
+  const [uploadingArt, setUploadingArt] = useState(false);
 
   const handleClientCnpjLookup = async () => {
     const cnpj = (clientForm.cnpj || '').replace(/\D/g, '');
@@ -117,6 +118,19 @@ export default function ReportForm() {
   useBloquearSaida(!saving && (!!form.equipamento || !!form.cliente_id || (form.measurements?.length > 0)));
 
   const set = (field, value) => setForm(f => ({ ...f, [field]: value }));
+
+  const handleArtUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.type !== 'application/pdf') { alert('Selecione um arquivo PDF.'); return; }
+    if (!garantirConexao()) return;
+    setUploadingArt(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      set('art_documento_url', file_url);
+    } catch (err) { alert('Erro ao enviar ART: ' + err.message); }
+    setUploadingArt(false);
+  };
 
   // Salvar como rascunho no servidor e continuar editando
   const handleSaveDraft = async () => {
@@ -338,6 +352,36 @@ export default function ReportForm() {
         <CardHeader><CardTitle>Dados Técnicos</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div><Label>Número da ART</Label><Input value={form.numero_art || ''} onChange={e => set('numero_art', e.target.value)} /></div>
+          <div>
+            <Label>Documento da ART (PDF)</Label>
+            {form.art_documento_url ? (
+              <div className="flex items-center gap-2">
+                <a href={form.art_documento_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-blue-600 hover:underline flex-1 truncate">
+                  <FileText className="h-4 w-4 shrink-0" /> {form.art_documento_url.split('/').pop()}
+                </a>
+                <label className="cursor-pointer">
+                  <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium border border-input bg-transparent shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-3">
+                    <Upload className="h-4 w-4" /> Substituir
+                  </span>
+                  <input type="file" accept="application/pdf" className="hidden" onChange={handleArtUpload} />
+                </label>
+                <Button type="button" variant="ghost" size="sm" onClick={() => set('art_documento_url', '')}>
+                  Remover
+                </Button>
+              </div>
+            ) : (
+              <label className="cursor-pointer block">
+                <div className="flex items-center justify-center gap-2 border-2 border-dashed border-input rounded-md h-20 hover:bg-accent/50 transition-colors">
+                  {uploadingArt ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> <span className="text-sm text-muted-foreground">Enviando...</span></>
+                  ) : (
+                    <><Upload className="h-4 w-4 text-muted-foreground" /> <span className="text-sm text-muted-foreground">Clique para anexar o PDF da ART</span></>
+                  )}
+                </div>
+                <input type="file" accept="application/pdf" className="hidden" onChange={handleArtUpload} disabled={uploadingArt} />
+              </label>
+            )}
+          </div>
           <div><Label>Normas e Referências</Label><Textarea value={form.normas || ''} onChange={e => set('normas', e.target.value)} rows={2} /></div>
           <div><Label className="mb-1 block">Condições do Ambiente e Clima</Label>
           <EnvironmentConditions value={form.condicoes_ambiente} onChange={obj => set('condicoes_ambiente', obj)} location={form.local} autoFetch={isNew} /></div>
