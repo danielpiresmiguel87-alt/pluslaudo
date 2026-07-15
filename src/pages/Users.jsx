@@ -101,29 +101,38 @@ export default function Users() {
       ) : users.length === 0 ? (
         <p className="text-muted-foreground text-center py-8">Nenhum usuário cadastrado.</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {users.map(u => (
-            <Card key={u.id}>
-              <CardContent className="pt-6">
-                <div className="flex justify-between items-start">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium">{u.full_name || u.email}</p>
-                      <Badge variant={ROLE_VARIANTS[u.role] || 'outline'}>{ROLE_LABELS[u.role] || u.role}</Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{u.email}</p>
-                    {u.cpf && <p className="text-xs text-muted-foreground">CPF: {u.cpf}</p>}
-                    {u.crea_sc && <p className="text-xs text-muted-foreground">CREA-SC: {u.crea_sc}</p>}
-                    {u.registro_profissional && <p className="text-xs text-muted-foreground">Registro: {u.registro_profissional}</p>}
-                  </div>
-                  <Button variant="ghost" size="icon" onClick={() => startEdit(u)}>
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <Card>
+          <CardContent className="p-0 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-left">
+                  <th className="px-4 py-3 font-medium">Nome</th>
+                  <th className="px-4 py-3 font-medium">E-mail</th>
+                  <th className="px-4 py-3 font-medium">Função</th>
+                  <th className="px-4 py-3 font-medium">CPF</th>
+                  <th className="px-4 py-3 font-medium">CREA-SC / Registro</th>
+                  <th className="px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map(u => (
+                  <tr key={u.id} className="border-b last:border-0 hover:bg-muted/50">
+                    <td className="px-4 py-3 font-medium">{u.full_name || u.email}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{u.email}</td>
+                    <td className="px-4 py-3"><Badge variant={ROLE_VARIANTS[u.role] || 'outline'}>{ROLE_LABELS[u.role] || u.role}</Badge></td>
+                    <td className="px-4 py-3 text-muted-foreground">{u.cpf || '-'}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{u.crea_sc || u.registro_profissional || '-'}</td>
+                    <td className="px-4 py-3 text-right">
+                      <Button variant="ghost" size="icon" onClick={() => startEdit(u)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
       )}
 
       <Dialog open={showInvite} onOpenChange={setShowInvite}>
