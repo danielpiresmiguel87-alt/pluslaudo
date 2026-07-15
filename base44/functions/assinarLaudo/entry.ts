@@ -4,28 +4,62 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
-    const { token, action, signature_data_url } = body;
+    const { token, action, signature_data_url, measurements: incomingMeasurements } = body;
 
     if (!token) return Response.json({ error: 'Token obrigatório' }, { status: 400 });
 
-    // Busca laudo pelo token
     const reports = await base44.asServiceRole.entities.Report.filter({ assinatura_token: token });
     if (!reports || reports.length === 0) {
-      return Response.json({ error: 'Link inválido ou expirado. Solicite um novo link de assinatura.' }, { status: 404 });
+      return Response.json({ error: 'Link inválido ou expirado. Solicite um novo link.' }, { status: 404 });
     }
 
     const report = reports[0];
 
-    // Se já foi assinado, bloqueia acesso
     if (report.assinatura_cliente_url) {
       return Response.json({ error: 'Este laudo já foi assinado. O link não está mais disponível.', already_signed: true }, { status: 403 });
     }
 
-    // Ação: salvar assinatura
+    // Ação: salvar medições do eletricista
+    if (action === 'save_measurements') {
+      const processedMeasurements = [];
+      for (const m of (incomingMeasurements || [])) {
+        const fotos = m.fotos || [];
+        const uploadedFotos = [];
+        for (const foto of fotos) {
+          if (typeof foto === 'string' && foto.startsWith('data:')) {
+            const base64 = foto.split(',')[1];
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            const blob = new Blob([bytes], { type: 'image/jpeg' });
+            const file = new File([blob], 'medicao-foto.jpg', { type: 'image/jpeg' });
+            const { file_url } = await base44.asServiceRole.integrations.Core.UploadFile({ file });
+            uploadedFotos.push(file_url);
+          } else if (typeof foto === 'string') {
+            uploadedFotos.push(foto);
+          }
+        }
+        processedMeasurements.push({ ...m, fotos: uploadedFotos });
+      }
+
+      const lim = report.limite_ohms || 10;
+      const hasMeas = processedMeasurements.length > 0;
+      const allApproved = hasMeas && processedMeasurements.every(m => (m.valor_medido ?? Infinity) <= lim);
+      const status = !hasMeas ? 'rascunho' : allApproved ? 'aprovado' : 'reprovado';
+
+      await base44.asServiceRole.entities.Report.update(report.id, {
+        measurements: processedMeasurements,
+        status,
+        workflow_status: 'pendente_revisao',
+      });
+
+      return Response.json({ success: true });
+    }
+
+    // Ação: salvar assinatura do cliente
     if (action === 'sign') {
       if (!signature_data_url) return Response.json({ error: 'Assinatura obrigatória' }, { status: 400 });
 
-      // Converte data URL para File
       const base64 = signature_data_url.split(',')[1];
       const binary = atob(base64);
       const bytes = new Uint8Array(binary.length);
@@ -35,7 +69,6 @@ Deno.serve(async (req) => {
 
       const { file_url } = await base44.asServiceRole.integrations.Core.UploadFile({ file });
 
-      // Salva assinatura e invalida token (remove)
       await base44.asServiceRole.entities.Report.update(report.id, {
         assinatura_cliente_url: file_url,
         assinatura_token: null
@@ -76,6 +109,7 @@ Deno.serve(async (req) => {
         limite_ohms: report.limite_ohms,
         measurements: report.measurements || [],
         status: report.status,
+        workflow_status: report.workflow_status,
         normas: report.normas,
         condicoes_ambiente: report.condicoes_ambiente,
         objetivo: report.objetivo,

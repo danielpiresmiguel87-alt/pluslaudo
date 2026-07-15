@@ -250,7 +250,7 @@ export default function ReportView() {
           {canEdit && !signingUrl && (
             <Button variant="outline" onClick={handleSendForSignature} disabled={sendingLink}>
               <Mail className="h-4 w-4 mr-2" />
-              {sendingLink ? 'Gerando...' : 'Gerar Link de Assinatura'}
+              {sendingLink ? 'Gerando...' : 'Gerar Link'}
             </Button>
           )}
           <Button variant="outline" onClick={handlePrint} disabled={exporting}><Printer className="h-4 w-4 mr-2" />{exporting ? 'Gerando...' : 'Imprimir'}</Button>
@@ -271,9 +271,9 @@ export default function ReportView() {
           <CardContent className="pt-4 space-y-3">
             <div className="flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-blue-600" />
-              <h3 className="font-semibold text-blue-800">Link de assinatura gerado</h3>
+              <h3 className="font-semibold text-blue-800">Link gerado</h3>
             </div>
-            <p className="text-sm text-blue-700">Envie o link abaixo ao cliente por WhatsApp ou e-mail para que ele possa revisar e assinar o laudo.</p>
+            <p className="text-sm text-blue-700">Envie o link ao eletricista para registrar as medições, ou ao cliente para assinatura do laudo.</p>
             <div className="flex items-center gap-2 bg-white rounded-lg border p-2">
               <Input readOnly value={signingUrl} className="flex-1 text-sm border-0 focus-visible:ring-0" />
               <Button size="sm" variant="outline" onClick={handleCopyLink}>

@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import SignaturePad from '@/components/report/SignaturePad';
+import MeasurementEditor from '@/components/report/MeasurementEditor';
 import { formatEnvironmentConditions } from '@/utils/environment';
 import { CheckCircle, PenLine, AlertCircle, ShieldCheck, FileCheck } from 'lucide-react';
 
@@ -28,6 +29,9 @@ export default function AssinaturaCliente() {
   const [signing, setSigning] = useState(false);
   const [signed, setSigned] = useState(false);
   const sigRef = useRef(null);
+  const [editableMeasurements, setEditableMeasurements] = useState([]);
+  const [savingMeas, setSavingMeas] = useState(false);
+  const [measSaved, setMeasSaved] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -41,6 +45,31 @@ export default function AssinaturaCliente() {
       setLoading(false);
     })();
   }, [token]);
+
+  useEffect(() => {
+    if (data?.report?.measurements) {
+      setEditableMeasurements(data.report.measurements);
+    }
+  }, [data]);
+
+  const handleSaveMeasurements = async () => {
+    setSavingMeas(true);
+    try {
+      const measurementsToSend = editableMeasurements.map(m => ({
+        ...m,
+        fotos: (m.fotos || []).map(f => {
+          if (typeof f === 'string') return f;
+          return f.dataUrl || f.url || '';
+        }).filter(Boolean),
+      }));
+      await base44.functions.invoke('assinarLaudo', { token, action: 'save_measurements', measurements: measurementsToSend });
+      setMeasSaved(true);
+    } catch (e) {
+      const msg = e?.response?.data?.error || e?.data?.error || e.message || 'Erro ao salvar medições';
+      alert(msg);
+    }
+    setSavingMeas(false);
+  };
 
   const handleSign = async () => {
     const sigDataUrl = sigRef.current?.toDataURL();
@@ -88,6 +117,46 @@ export default function AssinaturaCliente() {
           </div>
           <h2 className="text-xl font-bold mb-2">Assinatura Registrada!</h2>
           <p className="text-slate-500 text-sm">Sua assinatura foi registrada com sucesso no laudo técnico. Este link não está mais disponível.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (measSaved) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+        <div className="max-w-md w-full text-center bg-white rounded-lg shadow-lg p-8">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <FileCheck className="h-8 w-8 text-green-600" />
+          </div>
+          <h2 className="text-xl font-bold mb-2">Medições Enviadas!</h2>
+          <p className="text-slate-500 text-sm">Suas medições foram registradas com sucesso. O laudo será revisado pela equipe técnica.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (data?.report?.workflow_status === 'pendente_medicao') {
+    const r = data.report;
+    return (
+      <div className="min-h-screen bg-slate-200 py-8 px-4">
+        <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-xl p-6 space-y-4">
+          <div className="h-1.5 rounded-t" style={{ background: C.primary }} />
+          <div>
+            <h1 className="text-xl font-bold" style={{ color: C.primary }}>Medições de Aterramento</h1>
+            <p className="text-sm mt-1" style={{ color: C.gray }}>Registre as medições de resistência ôhmica realizadas no local.</p>
+          </div>
+          <div className="grid grid-cols-2 gap-4 text-sm rounded-lg p-4" style={{ background: C.light }}>
+            <div><span className="font-bold" style={{ color: C.primary }}>Equipamento:</span> {r.equipamento || '-'}</div>
+            <div><span className="font-bold" style={{ color: C.primary }}>Tag:</span> {r.tag_equipamento || '-'}</div>
+            <div><span className="font-bold" style={{ color: C.primary }}>Local:</span> {r.local || '-'}</div>
+            <div><span className="font-bold" style={{ color: C.primary }}>Limite:</span> {r.limite_ohms || 10} Ω</div>
+          </div>
+          <MeasurementEditor measurements={editableMeasurements} limite={r.limite_ohms || 10} onChange={setEditableMeasurements} />
+          <Button onClick={handleSaveMeasurements} disabled={savingMeas} size="lg" className="w-full">
+            <CheckCircle className="h-4 w-4 mr-2" />
+            {savingMeas ? 'Enviando...' : 'Concluir Medições'}
+          </Button>
         </div>
       </div>
     );

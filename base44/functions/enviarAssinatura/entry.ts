@@ -5,7 +5,7 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Não autorizado' }, { status: 401 });
-    if (user.role !== 'admin' && user.role !== 'engenheiro') {
+    if (user.role !== 'admin' && user.role !== 'engenheiro' && user.role !== 'coordenador') {
       return Response.json({ error: 'Acesso restrito a administradores e engenheiros' }, { status: 403 });
     }
 
@@ -16,58 +16,17 @@ Deno.serve(async (req) => {
     const report = await base44.asServiceRole.entities.Report.get(report_id);
     if (!report) return Response.json({ error: 'Laudo não encontrado' }, { status: 404 });
 
-    const clients = await base44.asServiceRole.entities.Client.list();
-    const client = clients.find(c => c.id === report.cliente_id);
-    if (!client?.email) {
-      return Response.json({ error: 'Cliente sem e-mail cadastrado. Cadastre o e-mail do cliente antes de enviar.' }, { status: 400 });
-    }
-
-    // Gera token único
     const token = crypto.randomUUID();
-
-    // Armazena token no laudo (invalida qualquer token anterior)
-    await base44.asServiceRole.entities.Report.update(report_id, {
-      assinatura_token: token
-    });
+    const updates = { assinatura_token: token };
+    if (!report.workflow_status || report.workflow_status === 'rascunho') {
+      updates.workflow_status = 'pendente_medicao';
+    }
+    await base44.asServiceRole.entities.Report.update(report_id, updates);
 
     const base = app_url || 'https://app.base44.com';
     const signingUrl = `${base}/assinatura/${token}`;
 
-    const equipamento = report.equipamento || 'Não informado';
-    const local = report.local || 'Não informado';
-    const data = report.data || 'Não informada';
-
-    let emailSent = false;
-    try {
-      await base44.asServiceRole.integrations.Core.SendEmail({
-        to: client.email,
-        subject: `Assinatura - Laudo Técnico de Aterramento - ${equipamento}`,
-        body: `Prezado(a) ${client.razao_social},
-
-Você recebeu um Laudo Técnico de Aterramento para assinatura.
-
-Equipamento: ${equipamento}
-Local: ${local}
-Data: ${data}
-
-Para visualizar e assinar o laudo, acesse o link abaixo:
-
-${signingUrl}
-
-Importante:
-- Este link é exclusivo para você.
-- Após assinar, o link perderá a validade automaticamente.
-- Se você não esperava este e-mail, por favor desconsidere.
-
-Atenciosamente,
-Equipe Técnica`
-      });
-      emailSent = true;
-    } catch (e) {
-      // E-mail pode falhar se o cliente não for usuário do app — retornamos o link para envio manual
-    }
-
-    return Response.json({ success: true, email: client.email, signing_url: signingUrl, email_sent: emailSent });
+    return Response.json({ success: true, signing_url: signingUrl });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
