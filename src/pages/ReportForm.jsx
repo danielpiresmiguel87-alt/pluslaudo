@@ -285,7 +285,7 @@ export default function ReportForm() {
               <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">—</SelectItem>
-                {users.filter(u => u.role === 'engenheiro').map(u => <SelectItem key={u.id} value={u.id}>{u.full_name || u.email}</SelectItem>)}
+                {users.map(u => <SelectItem key={u.id} value={u.id}>{u.full_name || u.email}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -295,7 +295,7 @@ export default function ReportForm() {
               <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">—</SelectItem>
-                {users.filter(u => u.role === 'eletricista').map(u => <SelectItem key={u.id} value={u.id}>{u.full_name || u.email}</SelectItem>)}
+                {users.map(u => <SelectItem key={u.id} value={u.id}>{u.full_name || u.email}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
