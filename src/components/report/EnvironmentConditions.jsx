@@ -12,9 +12,12 @@ export default function EnvironmentConditions({ value, onChange, location, autoF
   const v = { ...DEFAULTS, ...(typeof value === 'string' ? safeParse(value) : value) };
   const [fetching, setFetching] = useState(false);
   const [lastFetched, setLastFetched] = useState('');
-  const lastLocRef = useRef('');
+  const fetchedRef = useRef(false);
 
   const update = (field, val) => onChange({ ...v, [field]: val });
+
+  // Já possui dados (de relatório salvo ou de fetch anterior)
+  const hasData = !!(v.tempo || v.temperatura || v.umidade);
 
   const fetchWeather = async (loc) => {
     if (!loc || loc.trim().length < 3) return;
@@ -36,7 +39,7 @@ export default function EnvironmentConditions({ value, onChange, location, autoF
       if (res && (res.tempo || res.temperatura || res.umidade)) {
         onChange({ ...v, tempo: res.tempo || v.tempo, temperatura: res.temperatura != null ? String(res.temperatura) : v.temperatura, umidade: res.umidade != null ? String(res.umidade) : v.umidade });
         setLastFetched(loc);
-        lastLocRef.current = loc;
+        fetchedRef.current = true;
       }
     } catch (e) { /* ignore */ }
     setFetching(false);
@@ -44,12 +47,15 @@ export default function EnvironmentConditions({ value, onChange, location, autoF
 
   useEffect(() => {
     if (!autoFetch) return;
+    // Só busca automaticamente se ainda não há dados (primeira vez)
+    if (hasData) { fetchedRef.current = true; return; }
     if (!location || location.trim().length < 3) return;
+    if (fetchedRef.current) return;
     const loc = location.trim();
     const timer = setTimeout(() => fetchWeather(loc), 1500);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location, autoFetch]);
+  }, [location, autoFetch, hasData]);
 
   return (
     <div className="space-y-3">
@@ -65,8 +71,8 @@ export default function EnvironmentConditions({ value, onChange, location, autoF
           Condições climáticas preenchidas para "{lastFetched}".
         </div>
       )}
-      {!autoFetch && (
-        <Button type="button" variant="outline" size="sm" onClick={() => fetchWeather(location.trim())} disabled={fetching || !location || location.trim().length < 3}>
+      {hasData && (
+        <Button type="button" variant="outline" size="sm" onClick={() => fetchWeather(location?.trim())} disabled={fetching || !location || location.trim().length < 3}>
           <RefreshCw className={`h-3 w-3 mr-1 ${fetching ? 'animate-spin' : ''}`} />
           {fetching ? 'Buscando...' : 'Atualizar Condições Climáticas'}
         </Button>
