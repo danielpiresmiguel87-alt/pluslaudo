@@ -27,6 +27,33 @@ function loadImage(url) {
   });
 }
 
+async function loadPdfjs() {
+  if (window._pdfjsPromise) return window._pdfjsPromise;
+  window._pdfjsPromise = (async () => {
+    const pdfjs = await import('pdfjs-dist');
+    pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+    return pdfjs;
+  })();
+  return window._pdfjsPromise;
+}
+
+async function renderPdfPagesToImages(url) {
+  const pdfjs = await loadPdfjs();
+  const pdf = await pdfjs.getDocument(url).promise;
+  const images = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const viewport = page.getViewport({ scale: 2 });
+    const canvas = document.createElement('canvas');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    const ctx = canvas.getContext('2d');
+    await page.render({ canvasContext: ctx, viewport }).promise;
+    images.push({ dataURL: canvas.toDataURL('image/jpeg', 0.92), w: viewport.width, h: viewport.height });
+  }
+  return images;
+}
+
 function formatDate(d) {
   if (!d) return '';
   try { return new Date(d).toLocaleDateString('pt-BR'); } catch { return d; }
@@ -747,20 +774,23 @@ export async function generateReportPDF(report, data) {
     }
     y += 6;
 
-    // Tentar embutir o documento da ART
+    // Embutir o documento da ART
     const isPdf = report.art_documento_url.toLowerCase().includes('.pdf');
     if (isPdf) {
       try {
-        const pdfBytes = await fetch(report.art_documento_url).then(r => r.arrayBuffer());
-        const tempDoc = new jsPDF();
-        const totalPages = tempDoc.getNumberOfPages();
-        // jsPDF doesn't support inserting pages from another PDF directly via arrayBuffer in this way
-        // Instead, we'll add a note and link reference
-        y += 10;
-        doc.setFontSize(10.5);
-        doc.setFont(undefined, 'normal');
-        para('O documento completo da Anotação de Responsabilidade Técnica (ART) está disponível digitalmente e acompanha este laudo técnico. O documento original assinado encontra-se arquivado junto aos registros da empresa responsável.');
-        para('Para acesso ao documento digital, utilize o link de download disponível no sistema de gestão de laudos.');
+        const pages = await renderPdfPagesToImages(report.art_documento_url);
+        for (const pageImg of pages) {
+          doc.addPage();
+          pageNum++;
+          drawFooter();
+          const maxW = W - 2 * M;
+          const maxH = H - 2 * M;
+          const ratio = pageImg.h / pageImg.w;
+          let iw = maxW;
+          let ih = iw * ratio;
+          if (ih > maxH) { ih = maxH; iw = ih / ratio; }
+          addImg(doc, pageImg, (W - iw) / 2, (H - ih) / 2, iw, ih);
+        }
       } catch {
         para('Documento da ART anexado digitalmente. Consulte o sistema para acesso ao arquivo completo.');
       }
