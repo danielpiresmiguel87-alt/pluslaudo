@@ -19,8 +19,8 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Este laudo já foi assinado. O link não está mais disponível.', already_signed: true }, { status: 403 });
     }
 
-    // Ação: salvar medições do eletricista
-    if (action === 'save_measurements') {
+    // Ação: salvar medições (rascunho ou conclusão)
+    if (action === 'save_draft' || action === 'save_measurements') {
       const processedMeasurements = [];
       for (const m of (incomingMeasurements || [])) {
         const fotos = m.fotos || [];
@@ -47,11 +47,12 @@ Deno.serve(async (req) => {
       const allApproved = hasMeas && processedMeasurements.every(m => (m.valor_medido ?? Infinity) <= lim);
       const status = !hasMeas ? 'rascunho' : allApproved ? 'aprovado' : 'reprovado';
 
-      await base44.asServiceRole.entities.Report.update(report.id, {
-        measurements: processedMeasurements,
-        status,
-        workflow_status: 'pendente_revisao',
-      });
+      const updateData = { measurements: processedMeasurements, status };
+      if (action === 'save_measurements') {
+        updateData.workflow_status = 'pendente_revisao';
+        updateData.assinatura_token = null;
+      }
+      await base44.asServiceRole.entities.Report.update(report.id, updateData);
 
       return Response.json({ success: true });
     }

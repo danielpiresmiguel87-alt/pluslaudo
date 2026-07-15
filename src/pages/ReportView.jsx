@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Pencil, Download, Printer, CheckCircle, Upload, FileText, Save, PenLine, Mail, CheckCheck, Copy, Share2 } from 'lucide-react';
+import { ArrowLeft, Pencil, Download, Printer, CheckCircle, Upload, FileText, Save, PenLine, Mail, CheckCheck, Copy, Share2, RotateCcw } from 'lucide-react';
 import { generateReportPDF } from '@/utils/reportPdf';
 import SignaturePad from '@/components/report/SignaturePad';
 import PdfViewer from '@/components/report/PdfViewer';
@@ -61,17 +61,19 @@ export default function ReportView() {
     })();
   }, [id]);
 
-  const handleSendForSignature = async () => {
+  const handleSendForSignature = async (reopen = false) => {
     setSendingLink(true);
     try {
       const res = await base44.functions.invoke('enviarAssinatura', {
         report_id: id,
-        app_url: window.location.origin
+        app_url: window.location.origin,
+        reopen,
       });
       setSigningUrl(res.data.signing_url);
       setLinkSent(true);
-      if (res.data.email_sent) {
-        alert(`E-mail enviado automaticamente para: ${res.data.email}`);
+      if (reopen) {
+        const updated = await base44.entities.Report.get(id);
+        setReport(updated);
       }
     } catch (e) {
       alert('Erro ao gerar link: ' + (e?.response?.data?.error || e?.data?.error || e.message));
@@ -247,8 +249,14 @@ export default function ReportView() {
           {(canEdit || isEngenheiro) && ws === 'pendente_revisao' && (
             <Button onClick={handleConcluir}><CheckCircle className="h-4 w-4 mr-2" />Concluir Revisão</Button>
           )}
+          {canEdit && ws === 'pendente_revisao' && !signingUrl && (
+            <Button variant="outline" onClick={() => handleSendForSignature(true)} disabled={sendingLink}>
+              <RotateCcw className="h-4 w-4 mr-2" />
+              {sendingLink ? 'Reabrindo...' : 'Reabrir Medições'}
+            </Button>
+          )}
           {canEdit && !signingUrl && (
-            <Button variant="outline" onClick={handleSendForSignature} disabled={sendingLink}>
+            <Button variant="outline" onClick={() => handleSendForSignature()} disabled={sendingLink}>
               <Mail className="h-4 w-4 mr-2" />
               {sendingLink ? 'Gerando...' : 'Gerar Link'}
             </Button>

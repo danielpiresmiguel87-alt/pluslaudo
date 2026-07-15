@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import SignaturePad from '@/components/report/SignaturePad';
 import MeasurementEditor from '@/components/report/MeasurementEditor';
 import { formatEnvironmentConditions } from '@/utils/environment';
-import { CheckCircle, PenLine, AlertCircle, ShieldCheck, FileCheck } from 'lucide-react';
+import { CheckCircle, PenLine, AlertCircle, ShieldCheck, FileCheck, Save } from 'lucide-react';
 
 const C = {
   primary: '#1E3A5F',
@@ -53,6 +53,8 @@ export default function AssinaturaCliente() {
   }, [data]);
 
   const handleSaveMeasurements = async () => {
+    const confirmed = window.confirm('Você tem certeza que deseja concluir? Após a conclusão não será mais possível fazer alterações.');
+    if (!confirmed) return;
     setSavingMeas(true);
     try {
       const measurementsToSend = editableMeasurements.map(m => ({
@@ -64,6 +66,25 @@ export default function AssinaturaCliente() {
       }));
       await base44.functions.invoke('assinarLaudo', { token, action: 'save_measurements', measurements: measurementsToSend });
       setMeasSaved(true);
+    } catch (e) {
+      const msg = e?.response?.data?.error || e?.data?.error || e.message || 'Erro ao salvar medições';
+      alert(msg);
+    }
+    setSavingMeas(false);
+  };
+
+  const handleSaveDraft = async () => {
+    setSavingMeas(true);
+    try {
+      const measurementsToSend = editableMeasurements.map(m => ({
+        ...m,
+        fotos: (m.fotos || []).map(f => {
+          if (typeof f === 'string') return f;
+          return f.dataUrl || f.url || '';
+        }).filter(Boolean),
+      }));
+      await base44.functions.invoke('assinarLaudo', { token, action: 'save_draft', measurements: measurementsToSend });
+      alert('Medições salvas! Você pode continuar mais tarde usando o mesmo link.');
     } catch (e) {
       const msg = e?.response?.data?.error || e?.data?.error || e.message || 'Erro ao salvar medições';
       alert(msg);
@@ -153,10 +174,16 @@ export default function AssinaturaCliente() {
             <div><span className="font-bold" style={{ color: C.primary }}>Limite:</span> {r.limite_ohms || 10} Ω</div>
           </div>
           <MeasurementEditor measurements={editableMeasurements} limite={r.limite_ohms || 10} onChange={setEditableMeasurements} />
-          <Button onClick={handleSaveMeasurements} disabled={savingMeas} size="lg" className="w-full">
-            <CheckCircle className="h-4 w-4 mr-2" />
-            {savingMeas ? 'Enviando...' : 'Concluir Medições'}
-          </Button>
+          <div className="flex gap-3">
+            <Button onClick={handleSaveDraft} disabled={savingMeas} variant="outline" size="lg" className="flex-1">
+              <Save className="h-4 w-4 mr-2" />
+              {savingMeas ? 'Salvando...' : 'Salvar e Continuar Depois'}
+            </Button>
+            <Button onClick={handleSaveMeasurements} disabled={savingMeas} size="lg" className="flex-1">
+              <CheckCircle className="h-4 w-4 mr-2" />
+              {savingMeas ? 'Enviando...' : 'Concluir Medições'}
+            </Button>
+          </div>
         </div>
       </div>
     );

@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { report_id, app_url } = body;
+    const { report_id, app_url, reopen } = body;
     if (!report_id) return Response.json({ error: 'ID do laudo obrigatório' }, { status: 400 });
 
     const report = await base44.asServiceRole.entities.Report.get(report_id);
@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
 
     const token = crypto.randomUUID();
     const updates = { assinatura_token: token };
-    if (!report.workflow_status || report.workflow_status === 'rascunho') {
+    if (reopen || !report.workflow_status || report.workflow_status === 'rascunho') {
       updates.workflow_status = 'pendente_medicao';
     }
     await base44.asServiceRole.entities.Report.update(report_id, updates);
