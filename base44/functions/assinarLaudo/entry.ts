@@ -4,7 +4,7 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
-    const { token, action, signature_data_url, measurements: incomingMeasurements } = body;
+    const { token, action, signature_data_url, measurements: incomingMeasurements, condicoes_ambiente } = body;
 
     if (!token) return Response.json({ error: 'Token obrigatório' }, { status: 400 });
 
@@ -48,6 +48,7 @@ Deno.serve(async (req) => {
       const status = !hasMeas ? 'rascunho' : allApproved ? 'aprovado' : 'reprovado';
 
       const updateData = { measurements: processedMeasurements, status };
+      if (condicoes_ambiente) updateData.condicoes_ambiente = condicoes_ambiente;
       if (action === 'save_measurements') {
         updateData.workflow_status = 'pendente_revisao';
         updateData.assinatura_token = null;

@@ -37,7 +37,9 @@ export default function EnvironmentConditions({ value, onChange, location, autoF
         }
       });
       if (res && (res.tempo || res.temperatura || res.umidade)) {
-        onChange({ ...v, tempo: res.tempo || v.tempo, temperatura: res.temperatura != null ? String(res.temperatura) : v.temperatura, umidade: res.umidade != null ? String(res.umidade) : v.umidade });
+        const hour = new Date().getHours();
+        const autoPeriodo = hour >= 5 && hour < 12 ? 'Manhã' : hour >= 12 && hour < 18 ? 'Tarde' : 'Noite';
+        onChange({ ...v, tempo: res.tempo || v.tempo, temperatura: res.temperatura != null ? String(res.temperatura) : v.temperatura, umidade: res.umidade != null ? String(res.umidade) : v.umidade, periodo: v.periodo || autoPeriodo });
         setLastFetched(loc);
         fetchedRef.current = true;
       }

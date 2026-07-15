@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import SignaturePad from '@/components/report/SignaturePad';
 import MeasurementEditor from '@/components/report/MeasurementEditor';
+import EnvironmentConditions from '@/components/report/EnvironmentConditions';
 import { formatEnvironmentConditions } from '@/utils/environment';
 import { CheckCircle, PenLine, AlertCircle, ShieldCheck, FileCheck, Save } from 'lucide-react';
 
@@ -32,6 +33,7 @@ export default function AssinaturaCliente() {
   const [editableMeasurements, setEditableMeasurements] = useState([]);
   const [savingMeas, setSavingMeas] = useState(false);
   const [measSaved, setMeasSaved] = useState(false);
+  const [condicoes, setCondicoes] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -50,6 +52,9 @@ export default function AssinaturaCliente() {
     if (data?.report?.measurements) {
       setEditableMeasurements(data.report.measurements);
     }
+    if (data?.report?.condicoes_ambiente) {
+      setCondicoes(data.report.condicoes_ambiente);
+    }
   }, [data]);
 
   const handleSaveMeasurements = async () => {
@@ -64,7 +69,7 @@ export default function AssinaturaCliente() {
           return f.dataUrl || f.url || '';
         }).filter(Boolean),
       }));
-      await base44.functions.invoke('assinarLaudo', { token, action: 'save_measurements', measurements: measurementsToSend });
+      await base44.functions.invoke('assinarLaudo', { token, action: 'save_measurements', measurements: measurementsToSend, condicoes_ambiente: condicoes });
       setMeasSaved(true);
     } catch (e) {
       const msg = e?.response?.data?.error || e?.data?.error || e.message || 'Erro ao salvar medições';
@@ -83,7 +88,7 @@ export default function AssinaturaCliente() {
           return f.dataUrl || f.url || '';
         }).filter(Boolean),
       }));
-      await base44.functions.invoke('assinarLaudo', { token, action: 'save_draft', measurements: measurementsToSend });
+      await base44.functions.invoke('assinarLaudo', { token, action: 'save_draft', measurements: measurementsToSend, condicoes_ambiente: condicoes });
       alert('Medições salvas! Você pode continuar mais tarde usando o mesmo link.');
     } catch (e) {
       const msg = e?.response?.data?.error || e?.data?.error || e.message || 'Erro ao salvar medições';
@@ -172,6 +177,10 @@ export default function AssinaturaCliente() {
             <div><span className="font-bold" style={{ color: C.primary }}>Tag:</span> {r.tag_equipamento || '-'}</div>
             <div><span className="font-bold" style={{ color: C.primary }}>Local:</span> {r.local || '-'}</div>
             <div><span className="font-bold" style={{ color: C.primary }}>Limite:</span> {r.limite_ohms || 10} Ω</div>
+          </div>
+          <div>
+            <h2 className="text-sm font-bold mb-2" style={{ color: C.primary }}>Condições do Ambiente e Clima</h2>
+            <EnvironmentConditions value={condicoes} onChange={(v) => setCondicoes(v)} location={r.local} />
           </div>
           <MeasurementEditor measurements={editableMeasurements} limite={r.limite_ohms || 10} onChange={setEditableMeasurements} />
           <div className="flex flex-col sm:flex-row gap-3">
