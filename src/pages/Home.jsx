@@ -129,7 +129,14 @@ export default function Home() {
         )}
       </div>
 
-      <SummaryCards {...stats} />
+      <SummaryCards {...stats} onFilter={(f) => {
+        setSearch('');
+        setFilterClient('all');
+        if (!f) { setFilterStatus('all'); setFilterWorkflow('all'); }
+        else if (f === 'aprovado' || f === 'reprovado') { setFilterStatus(f); setFilterWorkflow('all'); }
+        else if (f === 'pendente') { setFilterStatus('all'); setFilterWorkflow('pendente_medicao'); }
+        else { setFilterStatus('all'); setFilterWorkflow('all'); }
+      }} />
 
       <Card className="border-orange-200 bg-orange-50">
         <CardContent className="pt-4">
