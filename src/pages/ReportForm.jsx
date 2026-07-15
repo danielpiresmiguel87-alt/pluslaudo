@@ -38,6 +38,8 @@ export default function ReportForm() {
   const [clients, setClients] = useState([]);
   const [users, setUsers] = useState([]);
   const [instruments, setInstruments] = useState([]);
+  const [engineers, setEngineers] = useState([]);
+  const [electricians, setElectricians] = useState([]);
   const [form, setForm] = useState({
     equipamento: '', tag_equipamento: '', local: '', data: new Date().toISOString().split('T')[0],
     cliente_id: '', engenheiro_id: '', eletricista_id: '', instrumento_id: '',
@@ -83,8 +85,11 @@ export default function ReportForm() {
       base44.entities.Client.list(),
       base44.entities.User.list(),
       base44.entities.Instrument.list(),
-    ]).then(([c, u, i]) => {
+      base44.entities.Engineer.list(),
+      base44.entities.Electrician.list(),
+    ]).then(([c, u, i, engs, elecs]) => {
       setClients(c); setUsers(u); setInstruments(i);
+      setEngineers(engs); setElectricians(elecs);
     });
     if (!isNew && !draft) {
       base44.entities.Report.get(id).then(r => {
@@ -286,6 +291,7 @@ export default function ReportForm() {
               <SelectContent>
                 <SelectItem value="none">—</SelectItem>
                 {users.map(u => <SelectItem key={u.id} value={u.id}>{u.full_name || u.email}</SelectItem>)}
+                {engineers.map(e => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -296,6 +302,7 @@ export default function ReportForm() {
               <SelectContent>
                 <SelectItem value="none">—</SelectItem>
                 {users.map(u => <SelectItem key={u.id} value={u.id}>{u.full_name || u.email}</SelectItem>)}
+                {electricians.map(e => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
