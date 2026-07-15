@@ -714,67 +714,6 @@ export async function generateReportPDF(report, data) {
 
   // ── ANEXO: DOCUMENTO DA ART ──
   if (report.art_documento_url) {
-    // Página de capa do anexo
-    doc.addPage();
-    pageNum++;
-    y = M;
-
-    // Borda decorativa topo
-    doc.setFillColor(...COLOR_PRIMARY);
-    doc.rect(0, 0, W, 6, 'F');
-    doc.setFillColor(...COLOR_ACCENT);
-    doc.rect(0, 6, W, 2, 'F');
-
-    y += 20;
-    doc.setFontSize(16);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(...COLOR_PRIMARY);
-    doc.text('ANEXO I', W / 2, y, { align: 'center' });
-    y += 10;
-    doc.setFontSize(13);
-    doc.setTextColor(...COLOR_ACCENT);
-    doc.text('Anotação de Responsabilidade Técnica', W / 2, y, { align: 'center' });
-    y += 10;
-
-    doc.setDrawColor(...COLOR_ACCENT);
-    doc.setLineWidth(0.5);
-    doc.line(M + 40, y, W - M - 40, y);
-    y += 12;
-
-    doc.setFontSize(11);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(...COLOR_PRIMARY);
-    doc.text('Número da ART:', M, y);
-    doc.setFont(undefined, 'normal');
-    doc.setTextColor(0, 0, 0);
-    doc.text(report.numero_art || '-', M + 40, y);
-    y += 8;
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(...COLOR_PRIMARY);
-    doc.text('Equipamento:', M, y);
-    doc.setFont(undefined, 'normal');
-    doc.setTextColor(0, 0, 0);
-    doc.text(report.equipamento || '-', M + 40, y);
-    y += 8;
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(...COLOR_PRIMARY);
-    doc.text('Responsável:', M, y);
-    doc.setFont(undefined, 'normal');
-    doc.setTextColor(0, 0, 0);
-    doc.text(engineer?.nome || '-', M + 40, y);
-    y += 8;
-    if (engineer?.crea_sc) {
-      doc.setFont(undefined, 'bold');
-      doc.setTextColor(...COLOR_PRIMARY);
-      doc.text('CREA-SC:', M, y);
-      doc.setFont(undefined, 'normal');
-      doc.setTextColor(0, 0, 0);
-      doc.text(engineer.crea_sc, M + 40, y);
-      y += 8;
-    }
-    y += 6;
-
-    // Embutir o documento da ART
     const isPdf = report.art_documento_url.toLowerCase().includes('.pdf');
     if (isPdf) {
       try {
@@ -792,28 +731,27 @@ export async function generateReportPDF(report, data) {
           addImg(doc, pageImg, (W - iw) / 2, (H - ih) / 2, iw, ih);
         }
       } catch {
+        doc.addPage();
+        pageNum++;
+        drawFooter();
         para('Documento da ART anexado digitalmente. Consulte o sistema para acesso ao arquivo completo.');
       }
     } else {
-      // Se for imagem, embutir diretamente
+      doc.addPage();
+      pageNum++;
+      drawFooter();
       const img = await loadImage(report.art_documento_url);
       if (img) {
-        const maxW = W - 2 * M - 10;
-        const maxH = H - y - 30;
+        const maxW = W - 2 * M;
+        const maxH = H - 2 * M;
         let iw = img.w;
         let ih = img.h;
         const ratio = ih / iw;
         if (iw > maxW) { iw = maxW; ih = iw * ratio; }
         if (ih > maxH) { ih = maxH; iw = ih / ratio; }
-        doc.setDrawColor(...COLOR_ACCENT);
-        doc.setLineWidth(0.3);
-        doc.rect(W / 2 - iw / 2 - 1, y - 2, iw + 2, ih + 2);
-        addImg(doc, img, W / 2 - iw / 2, y - 1, iw, ih);
-        y += ih + 8;
+        addImg(doc, img, (W - iw) / 2, (H - ih) / 2, iw, ih);
       }
     }
-
-    drawFooter();
   }
 
   return doc;
