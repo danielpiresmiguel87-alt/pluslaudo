@@ -73,12 +73,10 @@ export default function EnvironmentConditions({ value, onChange, location, autoF
           Condições climáticas preenchidas para "{lastFetched}".
         </div>
       )}
-      {hasData && (
-        <Button type="button" variant="outline" size="sm" onClick={() => fetchWeather(location?.trim())} disabled={fetching || !location || location.trim().length < 3}>
-          <RefreshCw className={`h-3 w-3 mr-1 ${fetching ? 'animate-spin' : ''}`} />
-          {fetching ? 'Buscando...' : 'Atualizar Condições Climáticas'}
-        </Button>
-      )}
+      <Button type="button" variant="outline" size="sm" onClick={() => fetchWeather(location?.trim())} disabled={fetching || !location || location.trim().length < 3}>
+        <RefreshCw className={`h-3 w-3 mr-1 ${fetching ? 'animate-spin' : ''}`} />
+        {fetching ? 'Buscando...' : hasData ? 'Atualizar Condições Climáticas' : 'Carregar Condições Climáticas'}
+      </Button>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label>Período</Label>
