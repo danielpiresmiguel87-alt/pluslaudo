@@ -162,7 +162,7 @@ export default function AssinaturaCliente() {
     );
   }
 
-  if (data?.report?.workflow_status === 'pendente_medicao') {
+  if (data?.report?.workflow_status === 'pendente_medicao' || data?.report?.workflow_status === 'pendente_revisao') {
     const r = data.report;
     return (
       <div className="min-h-screen bg-slate-200 py-8 px-4">

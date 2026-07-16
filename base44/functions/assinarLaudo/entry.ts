@@ -51,7 +51,6 @@ Deno.serve(async (req) => {
       if (condicoes_ambiente) updateData.condicoes_ambiente = condicoes_ambiente;
       if (action === 'save_measurements') {
         updateData.workflow_status = 'pendente_revisao';
-        updateData.assinatura_token = null;
       }
       await base44.asServiceRole.entities.Report.update(report.id, updateData);
 
