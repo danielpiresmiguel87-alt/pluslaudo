@@ -356,7 +356,7 @@ export async function generateReportPDF(report, data) {
   }
 
   // ── 10. ART ──
-  section(10, 'Anotação de Responsabilidade Técnica (ART)');
+  section(10, 'ANOTAÇÃO DE RESPONSABILIDADE TÉCNICA (ART)');
   kv('Número da ART', report.numero_art);
 
   // ── 11. LEVANTAMENTO DOS DADOS ──
