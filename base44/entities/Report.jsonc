@@ -31,7 +31,7 @@
     "instrumento_id": {
       "type": "string"
     },
-    "mostrar_instrumento": {
+    "mostrar_data_calibracao": {
       "type": "boolean",
       "default": true
     },

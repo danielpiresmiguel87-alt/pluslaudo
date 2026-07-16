@@ -304,20 +304,20 @@ export async function generateReportPDF(report, data) {
   kv('Registro Profissional', electrician?.registro_profissional);
 
   // ── INSTRUMENTO UTILIZADO ──
-  if (report.mostrar_instrumento !== false) {
-    section('INSTRUMENTO DE MEDIÇÃO UTILIZADO');
-    kv('Marca / Modelo', instrument?.marca_modelo);
-    kv('Número de Série', instrument?.numero_serie);
+  section('INSTRUMENTO DE MEDIÇÃO UTILIZADO');
+  kv('Marca / Modelo', instrument?.marca_modelo);
+  kv('Número de Série', instrument?.numero_serie);
+  if (report.mostrar_data_calibracao !== false) {
     kv('Data de Calibração', instrument?.data_calibracao ? formatDate(instrument.data_calibracao) : '-');
-    if (instrument?.especificacoes) {
-      y += 2;
-      doc.setFontSize(10.5);
-      doc.setFont(undefined, 'bold');
-      doc.setTextColor(...COLOR_PRIMARY);
-      doc.text('Especificações Técnicas:', M, y);
-      y += 6;
-      para(instrument.especificacoes);
-    }
+  }
+  if (instrument?.especificacoes) {
+    y += 2;
+    doc.setFontSize(10.5);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...COLOR_PRIMARY);
+    doc.text('Especificações Técnicas:', M, y);
+    y += 6;
+    para(instrument.especificacoes);
   }
 
   // ── 6. NORMAS E REFERÊNCIAS ──

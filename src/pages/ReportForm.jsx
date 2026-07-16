@@ -48,7 +48,7 @@ export default function ReportForm() {
     objetivo: DEFAULT_OBJECTIVE, metodologia: DEFAULT_METHODOLOGY,
     limitacoes: '', recomendacoes: DEFAULT_RECOMMENDATIONS,
     limite_ohms: 10, measurements: [], workflow_status: 'rascunho',
-    mostrar_instrumento: true,
+    mostrar_data_calibracao: true,
   });
   const [showClientDialog, setShowClientDialog] = useState(false);
   const [clientForm, setClientForm] = useState({ razao_social: '', cnpj: '', endereco: '', cidade: '', cep: '', bairro: '', fone: '' });
@@ -337,8 +337,8 @@ export default function ReportForm() {
               </SelectContent>
             </Select>
             <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer mt-1">
-              <Checkbox checked={form.mostrar_instrumento !== false} onCheckedChange={v => set('mostrar_instrumento', v)} />
-              Mostrar dados do instrumento no laudo
+              <Checkbox checked={form.mostrar_data_calibracao !== false} onCheckedChange={v => set('mostrar_data_calibracao', v)} />
+              Mostrar data de calibração no laudo
             </label>
           </div>
         </CardContent>
