@@ -73,6 +73,7 @@ export async function generateReportPDF(report, data) {
   const W = 210, H = 297, M = 18;
   let y = M;
   let pageNum = 1;
+  let secNum = 0;
   const lim = report.limite_ohms || 10;
   const measurements = report.measurements || [];
   const hasMeas = measurements.length > 0;
@@ -110,7 +111,8 @@ export async function generateReportPDF(report, data) {
     }
   };
 
-  const section = (num, title) => {
+  const section = (title) => {
+    secNum++;
     // ensure header + at least some body text fit together (keep-with-next)
     ensure(36);
     if (y > M) y += 4;
@@ -119,7 +121,7 @@ export async function generateReportPDF(report, data) {
     doc.setFontSize(12);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(255, 255, 255);
-    doc.text(`${num}. ${title}`, M + 3, y + 1);
+    doc.text(`${secNum}. ${title}`, M + 3, y + 1);
     doc.setTextColor(0, 0, 0);
     y += 12;
   };
@@ -272,7 +274,7 @@ export async function generateReportPDF(report, data) {
   y += 16;
 
   // ── 1. DADOS DO CLIENTE ──
-  section(1, 'IDENTIFICAÇÃO DO CLIENTE / CONTRATANTE');
+  section('IDENTIFICAÇÃO DO CLIENTE / CONTRATANTE');
   kv('Razão Social', client?.razao_social);
   kv('CNPJ', client?.cnpj);
   kv('Endereço', client?.endereco);
@@ -282,7 +284,7 @@ export async function generateReportPDF(report, data) {
   kv('Telefone', client?.fone);
 
   // ── 2. EMPRESA RESPONSÁVEL ──
-  section(2, 'EMPRESA RESPONSÁVEL');
+  section('EMPRESA RESPONSÁVEL');
   kv('Razão Social', company?.razao_social);
   kv('CNPJ', company?.cnpj);
   kv('Endereço', company?.endereco);
@@ -290,46 +292,48 @@ export async function generateReportPDF(report, data) {
   kv('E-mail', company?.email);
 
   // ── 3. RESPONSÁVEL TÉCNICO ──
-  section(3, 'RESPONSÁVEL TÉCNICO');
+  section('RESPONSÁVEL TÉCNICO');
   kv('Nome', engineer?.nome);
   kv('CPF', engineer?.cpf);
   kv('CREA-SC', engineer?.crea_sc);
 
   // ── 4. ELETRICISTA EXECUTOR ──
-  section(4, 'ELETRICISTA EXECUTOR');
+  section('ELETRICISTA EXECUTOR');
   kv('Nome', electrician?.nome);
   kv('CPF', electrician?.cpf);
   kv('Registro Profissional', electrician?.registro_profissional);
 
-  // ── 5. INSTRUMENTO UTILIZADO ──
-  section(5, 'INSTRUMENTO DE MEDIÇÃO UTILIZADO');
-  kv('Marca / Modelo', instrument?.marca_modelo);
-  kv('Número de Série', instrument?.numero_serie);
-  kv('Data de Calibração', instrument?.data_calibracao ? formatDate(instrument.data_calibracao) : '-');
-  if (instrument?.especificacoes) {
-    y += 2;
-    doc.setFontSize(10.5);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(...COLOR_PRIMARY);
-    doc.text('Especificações Técnicas:', M, y);
-    y += 6;
-    para(instrument.especificacoes);
+  // ── INSTRUMENTO UTILIZADO ──
+  if (report.mostrar_instrumento !== false) {
+    section('INSTRUMENTO DE MEDIÇÃO UTILIZADO');
+    kv('Marca / Modelo', instrument?.marca_modelo);
+    kv('Número de Série', instrument?.numero_serie);
+    kv('Data de Calibração', instrument?.data_calibracao ? formatDate(instrument.data_calibracao) : '-');
+    if (instrument?.especificacoes) {
+      y += 2;
+      doc.setFontSize(10.5);
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(...COLOR_PRIMARY);
+      doc.text('Especificações Técnicas:', M, y);
+      y += 6;
+      para(instrument.especificacoes);
+    }
   }
 
   // ── 6. NORMAS E REFERÊNCIAS ──
-  section(6, 'NORMAS E REFERÊNCIAS');
+  section('NORMAS E REFERÊNCIAS');
   para(report.normas);
 
   // ── 7. CONDIÇÕES DO AMBIENTE ──
-  section(7, 'CONDIÇÕES DO AMBIENTE E CLIMÁTICAS');
+  section('CONDIÇÕES DO AMBIENTE E CLIMÁTICAS');
   para(formatEnvironmentConditions(report.condicoes_ambiente));
 
   // ── 8. OBJETIVO ──
-  section(8, 'OBJETIVO');
+  section('OBJETIVO');
   para(report.objetivo);
 
   // ── 9. METODOLOGIA ──
-  section(9, 'METODOLOGIA APLICADA');
+  section('METODOLOGIA APLICADA');
   para(report.metodologia);
 
   // Diagramas ilustrativos da metodologia
@@ -356,11 +360,11 @@ export async function generateReportPDF(report, data) {
   }
 
   // ── 10. ART ──
-  section(10, 'ANOTAÇÃO DE RESPONSABILIDADE TÉCNICA (ART)');
+  section('ANOTAÇÃO DE RESPONSABILIDADE TÉCNICA (ART)');
   kv('Número da ART', report.numero_art);
 
   // ── 11. LEVANTAMENTO DOS DADOS ──
-  section(11, 'LEVANTAMENTO DE DADOS');
+  section('LEVANTAMENTO DE DADOS');
   kv('Equipamento Avaliado', report.equipamento);
   kv('Tag de Identificação', report.tag_equipamento);
   kv('Limite de Referência', `${lim} Ohms`);
@@ -374,7 +378,7 @@ export async function generateReportPDF(report, data) {
   doc.setTextColor(0, 0, 0);
 
   // ── 12. RESULTADOS DAS MEDIÇÕES ──
-  section(12, 'RESULTADOS DAS MEDIÇÕES');
+  section('RESULTADOS DAS MEDIÇÕES');
 
   if (!hasMeas) {
     para('Nenhuma medição foi registrada neste laudo.', { justify: false });
@@ -491,7 +495,7 @@ export async function generateReportPDF(report, data) {
 
   // Fotos das medições
   if (hasMeas) {
-    section(13, 'REGISTROS FOTOGRÁFICOS');
+    section('REGISTROS FOTOGRÁFICOS');
     for (let i = 0; i < measurements.length; i++) {
       const m = measurements[i];
       if (!m.fotos || m.fotos.length === 0) continue;
@@ -615,7 +619,7 @@ export async function generateReportPDF(report, data) {
   }
 
   // ── PARECER TÉCNICO ──
-  section(hasMeas ? 14 : 13, 'PARECER TÉCNICO');
+  section('PARECER TÉCNICO');
   const conclusion = allApproved
     ? `Após a coleta e análise dos dados obtidos mediante medição realizada com instrumento calibrado, conclui-se que os valores de resistência ôhmica do aterramento da máquina/equipamento avaliado estão DENTRO dos padrões pré-estabelecidos pela NSCI/94 (Norma de Segurança contra Incêndio) e atendem aos requisitos de segurança estabelecidos pela NR-12 (Segurança no Trabalho em Máquinas e Equipamentos).\n\nConforme a referida norma, o sistema de aterramento não poderá apresentar resistência superior a ${lim} Ohms em qualquer época do ano. Todos os pontos medidos apresentaram valores iguais ou inferiores ao limite estabelecido.\n\nPortanto, atesta-se que este equipamento, para fins de aterramento elétrico e proteção contra descargas atmosféricas, está APTO para operação contínua, estando em conformidade com as exigências do Corpo de Bombeiros da Polícia Militar do Estado de Santa Catarina (Resolução nº 017/CAT/CCB/88) e do PPCI da empresa.`
     : hasMeas
@@ -637,12 +641,12 @@ export async function generateReportPDF(report, data) {
 
   // ── LIMITAÇÕES ──
   if (report.limitacoes) {
-    section(hasMeas ? 15 : 14, 'LIMITAÇÕES DO ENSAIO');
+    section('LIMITAÇÕES DO ENSAIO');
     para(report.limitacoes);
   }
 
   // ── RECOMENDAÇÕES ──
-  section(hasMeas ? (report.limitacoes ? 16 : 15) : (report.limitacoes ? 15 : 14), 'RECOMENDAÇÕES FINAIS');
+  section('RECOMENDAÇÕES FINAIS');
   para(report.recomendacoes);
 
   // ── ASSINATURAS ── (engenheiro e cliente lado a lado)

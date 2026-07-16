@@ -31,6 +31,10 @@
     "instrumento_id": {
       "type": "string"
     },
+    "mostrar_instrumento": {
+      "type": "boolean",
+      "default": true
+    },
     "numero_art": {
       "type": "string"
     },

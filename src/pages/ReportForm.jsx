@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import MeasurementEditor from '@/components/report/MeasurementEditor';
 import EnvironmentConditions from '@/components/report/EnvironmentConditions';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { ArrowLeft, Save, Plus, Search, Send, CheckCircle, Clock, Check, Upload, FileText, Loader2 } from 'lucide-react';
 import {
@@ -47,6 +48,7 @@ export default function ReportForm() {
     objetivo: DEFAULT_OBJECTIVE, metodologia: DEFAULT_METHODOLOGY,
     limitacoes: '', recomendacoes: DEFAULT_RECOMMENDATIONS,
     limite_ohms: 10, measurements: [], workflow_status: 'rascunho',
+    mostrar_instrumento: true,
   });
   const [showClientDialog, setShowClientDialog] = useState(false);
   const [clientForm, setClientForm] = useState({ razao_social: '', cnpj: '', endereco: '', cidade: '', cep: '', bairro: '', fone: '' });
@@ -334,6 +336,10 @@ export default function ReportForm() {
                 {instruments.map(i => <SelectItem key={i.id} value={i.id}>{i.marca_modelo}</SelectItem>)}
               </SelectContent>
             </Select>
+            <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer mt-1">
+              <Checkbox checked={form.mostrar_instrumento !== false} onCheckedChange={v => set('mostrar_instrumento', v)} />
+              Mostrar dados do instrumento no laudo
+            </label>
           </div>
         </CardContent>
       </Card>
