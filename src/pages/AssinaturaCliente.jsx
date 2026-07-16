@@ -69,7 +69,7 @@ export default function AssinaturaCliente() {
           return f.dataUrl || f.url || '';
         }).filter(Boolean),
       }));
-      await base44.functions.invoke('assinarLaudo', { token, action: 'save_measurements', measurements: measurementsToSend, condicoes_ambiente: condicoes });
+      await base44.functions.invoke('assinarLaudo', { token, action: 'save_measurements', measurements: measurementsToSend, condicoes_ambiente: formatEnvironmentConditions(condicoes) });
       setMeasSaved(true);
     } catch (e) {
       const msg = e?.response?.data?.error || e?.data?.error || e.message || 'Erro ao salvar medições';
@@ -88,7 +88,7 @@ export default function AssinaturaCliente() {
           return f.dataUrl || f.url || '';
         }).filter(Boolean),
       }));
-      await base44.functions.invoke('assinarLaudo', { token, action: 'save_draft', measurements: measurementsToSend, condicoes_ambiente: condicoes });
+      await base44.functions.invoke('assinarLaudo', { token, action: 'save_draft', measurements: measurementsToSend, condicoes_ambiente: formatEnvironmentConditions(condicoes) });
       alert('Medições salvas! Você pode continuar mais tarde usando o mesmo link.');
     } catch (e) {
       const msg = e?.response?.data?.error || e?.data?.error || e.message || 'Erro ao salvar medições';
