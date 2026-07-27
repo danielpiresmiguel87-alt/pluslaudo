@@ -384,19 +384,14 @@ export async function generateReportPDF(report, data) {
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...COLOR_PRIMARY);
     doc.text('\u2022', M, y);
-    doc.setFont(undefined, 'normal');
     doc.setTextColor(0, 0, 0);
-    const lines = doc.splitTextToSize(text, W - 2 * M - 6);
-    for (let i = 0; i < lines.length; i++) {
+    const lines = doc.splitTextToSize(text, W - 2 * M - 8);
+    for (const l of lines) {
       ensure(11.5 * 0.42 + 3.5);
       doc.setFontSize(11.5);
-      doc.setFont(undefined, i === 0 ? 'bold' : 'normal');
+      doc.setFont(undefined, 'normal');
       doc.setTextColor(0, 0, 0);
-      if (i === 0) {
-        doc.text(lines[i], M + 6, y);
-      } else {
-        doc.text(lines[i], M + 6, y);
-      }
+      doc.text(l, M + 6, y);
       y += 11.5 * 0.42 + 3.5;
     }
     y += 3;
