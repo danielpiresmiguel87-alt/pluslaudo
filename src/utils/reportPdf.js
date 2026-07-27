@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
 import { formatEnvironmentConditions } from '@/utils/environment';
+import { INSPECTION_ITEMS } from '@/utils/inspectionItems';
 
 function loadImage(url) {
   return new Promise((resolve) => {
@@ -379,28 +380,58 @@ export async function generateReportPDF(report, data) {
 
   // ── ITENS VERIFICADOS NO EQUIPAMENTO ──
   section('ITENS VERIFICADOS NO EQUIPAMENTO');
-  const bulletItem = (text) => {
+  const itensVerificados = report.itens_verificados || INSPECTION_ITEMS.map(() => true);
+  const checkboxSize = 4;
+  const checkboxGap = 3;
+  const textIndent = checkboxSize + checkboxGap + 2;
+
+  INSPECTION_ITEMS.forEach((item, idx) => {
+    const ok = itensVerificados[idx] !== false;
+    const fullText = `${item.label}: ${item.description}`;
+    const textW = W - 2 * M - textIndent - 12;
+
+    doc.setFontSize(11.5);
+    const lines = doc.splitTextToSize(fullText, textW);
+    const blockH = Math.max(checkboxSize, lines.length * (11.5 * 0.42 + 3.5)) + 4;
+    ensure(blockH);
+
+    // Checkbox
+    const cbX = M + 2;
+    const cbY = y - checkboxSize + 1;
+    doc.setDrawColor(...COLOR_PRIMARY);
+    doc.setLineWidth(0.5);
+    doc.rect(cbX, cbY, checkboxSize, checkboxSize);
+    if (ok) {
+      doc.setDrawColor(...COLOR_GREEN);
+      doc.setLineWidth(1);
+      doc.line(cbX + 0.8, cbY + checkboxSize / 2, cbX + checkboxSize / 2 - 0.3, cbY + checkboxSize - 1.2);
+      doc.line(cbX + checkboxSize / 2 - 0.3, cbY + checkboxSize - 1.2, cbX + checkboxSize - 0.8, cbY + 1);
+      doc.setDrawColor(...COLOR_PRIMARY);
+      doc.setLineWidth(0.5);
+    }
+
+    // Label (bold) + description (normal)
     doc.setFontSize(11.5);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...COLOR_PRIMARY);
-    doc.text('\u2022', M, y);
-    doc.setTextColor(0, 0, 0);
-    const lines = doc.splitTextToSize(text, W - 2 * M - 8);
-    for (const l of lines) {
-      ensure(11.5 * 0.42 + 3.5);
-      doc.setFontSize(11.5);
-      doc.setFont(undefined, 'normal');
-      doc.setTextColor(0, 0, 0);
-      doc.text(l, M + 6, y);
-      y += 11.5 * 0.42 + 3.5;
-    }
-    y += 3;
-  };
+    doc.text(lines[0], M + textIndent, y);
 
-  bulletItem('Equipotencialização das Massas: Verificação da correta interligação das partes metálicas não destinadas a conduzir corrente elétrica (carcaças e chassi) ao sistema de proteção.');
-  bulletItem('Integridade das Conexões: Inspeção visual e mecânica do estado de conservação, aperto e ausência de oxidação nos terminais do condutor de proteção (PE) junto ao barramento de terra no painel elétrico do equipamento.');
-  bulletItem('Ensaio Instrumental no Painel Elétrico: Medição da impedância e atestação da continuidade elétrica no ponto de conexão principal do aterramento dentro do painel de comando.');
-  bulletItem('Ensaios Instrumentais na Estrutura da Máquina: Aferição da continuidade elétrica em partes distintas e extremidades do equipamento (motores, zonas de aquecimento e estruturas metálicas periféricas) para garantir a ausência de seccionamentos no laço de proteção e a eficácia contra tensões de toque.');
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(0, 0, 0);
+    for (let i = 1; i < lines.length; i++) {
+      y += 11.5 * 0.42 + 3.5;
+      doc.text(lines[i], M + textIndent, y);
+    }
+
+    // Status label (OK / Pendente) à direita da primeira linha
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...(ok ? COLOR_GREEN : COLOR_RED));
+    doc.text(ok ? 'OK' : 'PENDENTE', W - M - 2, y - (lines.length - 1) * (11.5 * 0.42 + 3.5), { align: 'right' });
+    doc.setTextColor(0, 0, 0);
+
+    y += 11.5 * 0.42 + 3.5 + 4;
+  });
 
   // ── 12. RESULTADOS DAS MEDIÇÕES ──
   section('RESULTADOS DAS MEDIÇÕES');

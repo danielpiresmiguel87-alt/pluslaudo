@@ -91,6 +91,12 @@
     "assinatura_token": {
       "type": "string"
     },
+    "itens_verificados": {
+      "type": "array",
+      "items": {
+        "type": "boolean"
+      }
+    },
     "measurements": {
       "type": "array",
       "items": {

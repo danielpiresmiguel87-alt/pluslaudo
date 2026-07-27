@@ -21,6 +21,7 @@ import {
   useBloquearSaida,
 } from '@/lib/offline';
 import { formatEnvironmentConditions } from '@/utils/environment';
+import { INSPECTION_ITEMS, getDefaultInspectionStatus } from '@/utils/inspectionItems';
 
 const DEFAULT_OBJECTIVE = "O presente laudo técnico tem por objetivo avaliar as condições físicas e atestar a conformidade do sistema de aterramento de equipamentos, juntamente com o sistema de aterramento elétrico principal da instalação da empresa [NOME DA EMPRESA]. As inspeções e ensaios instrumentais realizados visam comprovar a eficácia da continuidade elétrica e da equipotencialização das massas, em estrito atendimento às exigências legais do Ministério do Trabalho e normativas técnicas vigentes, com destaque para a NR-10, ABNT NBR 5410, ABNT NBR 15749 e a Instrução Normativa nº 19 (IN 19) do Corpo de Bombeiros Militar de Santa Catarina (CBMSC).";
 
@@ -48,7 +49,7 @@ export default function ReportForm() {
     objetivo: DEFAULT_OBJECTIVE, metodologia: DEFAULT_METHODOLOGY,
     limitacoes: '', recomendacoes: DEFAULT_RECOMMENDATIONS,
     limite_ohms: 10, measurements: [], workflow_status: 'rascunho',
-    mostrar_data_calibracao: true,
+    mostrar_data_calibracao: true, itens_verificados: getDefaultInspectionStatus(),
   });
   const [showClientDialog, setShowClientDialog] = useState(false);
   const [clientForm, setClientForm] = useState({ razao_social: '', cnpj: '', endereco: '', cidade: '', cep: '', bairro: '', fone: '' });
@@ -401,6 +402,31 @@ export default function ReportForm() {
           <div><Label>Objetivo</Label><Textarea value={form.objetivo || ''} onChange={e => set('objetivo', e.target.value)} rows={4} /></div>
           <div><Label>Metodologia</Label><Textarea value={form.metodologia || ''} onChange={e => set('metodologia', e.target.value)} rows={5} /></div>
           <div><Label>Recomendações Finais</Label><Textarea value={form.recomendacoes || ''} onChange={e => set('recomendacoes', e.target.value)} rows={5} /></div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle>Itens Verificados no Equipamento</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">Marque os itens que foram verificados e estão conforme (OK).</p>
+          {INSPECTION_ITEMS.map((item, idx) => (
+            <label key={idx} className="flex items-start gap-3 cursor-pointer p-2 rounded-md hover:bg-accent/50">
+              <Checkbox
+                checked={(form.itens_verificados || getDefaultInspectionStatus())[idx] !== false}
+                onCheckedChange={v => {
+                  const atual = [...(form.itens_verificados || getDefaultInspectionStatus())];
+                  while (atual.length < INSPECTION_ITEMS.length) atual.push(true);
+                  atual[idx] = v;
+                  set('itens_verificados', atual);
+                }}
+                className="mt-0.5"
+              />
+              <div className="text-sm">
+                <span className="font-medium">{item.label}</span>
+                <span className="text-muted-foreground">: {item.description}</span>
+              </div>
+            </label>
+          ))}
         </CardContent>
       </Card>
 
