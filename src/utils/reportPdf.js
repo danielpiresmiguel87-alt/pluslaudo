@@ -330,11 +330,11 @@ export async function generateReportPDF(report, data) {
 
   // ── 8. OBJETIVO ──
   section('OBJETIVO');
-  para(report.objetivo);
+  para((report.objetivo || '').replace(/\[NOME DA EMPRESA\]/g, client?.razao_social || '____________________'));
 
   // ── 9. METODOLOGIA ──
   section('METODOLOGIA APLICADA');
-  para(report.metodologia);
+  para((report.metodologia || '').replace(/\[INSTRUMENTO_MODELO\]/g, instrument?.marca_modelo || 'Terrômetro Digital'));
 
   // Diagramas ilustrativos da metodologia
   const metodologiaImgs = [
@@ -376,6 +376,16 @@ export async function generateReportPDF(report, data) {
   doc.text('Conforme NSCI/94, o valor de resistência ôhmica do sistema de aterramento não pode ser superior a 10 Ohms em qualquer período do ano.', M, y, { maxWidth: W - 2 * M });
   y += 8;
   doc.setTextColor(0, 0, 0);
+
+  // ── ITENS VERIFICADOS NO EQUIPAMENTO ──
+  section('ITENS VERIFICADOS NO EQUIPAMENTO');
+  para('● Equipotencialização das Massas: Verificação da correta interligação das partes metálicas não destinadas a conduzir corrente elétrica (carcaças e chassi) ao sistema de proteção.', { justify: false });
+  y += 2;
+  para('● Integridade das Conexões: Inspeção visual e mecânica do estado de conservação, aperto e ausência de oxidação nos terminais do condutor de proteção (PE) junto ao barramento de terra no painel elétrico do equipamento.', { justify: false });
+  y += 2;
+  para('● Ensaio Instrumental no Painel Elétrico: Medição da impedância e atestação da continuidade elétrica no ponto de conexão principal do aterramento dentro do painel de comando.', { justify: false });
+  y += 2;
+  para('● Ensaios Instrumentais na Estrutura da Máquina: Aferição da continuidade elétrica em partes distintas e extremidades do equipamento (motores, zonas de aquecimento e estruturas metálicas periféricas) para garantir a ausência de seccionamentos no laço de proteção e a eficácia contra tensões de toque.', { justify: false });
 
   // ── 12. RESULTADOS DAS MEDIÇÕES ──
   section('RESULTADOS DAS MEDIÇÕES');
@@ -621,10 +631,10 @@ export async function generateReportPDF(report, data) {
   // ── PARECER TÉCNICO ──
   section('PARECER TÉCNICO');
   const conclusion = allApproved
-    ? `Após a coleta e análise dos dados obtidos mediante medição realizada com instrumento calibrado, conclui-se que os valores de resistência ôhmica do aterramento da máquina/equipamento avaliado estão DENTRO dos padrões pré-estabelecidos pela NSCI/94 (Norma de Segurança contra Incêndio) e atendem aos requisitos de segurança estabelecidos pela NR-12 (Segurança no Trabalho em Máquinas e Equipamentos).\n\nConforme a referida norma, o sistema de aterramento não poderá apresentar resistência superior a ${lim} Ohms em qualquer época do ano. Todos os pontos medidos apresentaram valores iguais ou inferiores ao limite estabelecido.\n\nPortanto, atesta-se que este equipamento, para fins de aterramento elétrico e proteção contra descargas atmosféricas, está APTO para operação contínua, estando em conformidade com as exigências do Corpo de Bombeiros da Polícia Militar do Estado de Santa Catarina (Resolução nº 017/CAT/CCB/88) e do PPCI da empresa.`
+    ? `Após a inspeção visual, a coleta e a análise instrumental dos dados, conclui-se que o sistema de aterramento e a equipotencialização dos equipamentos avaliados encontram-se em plenas condições de funcionamento e segurança. Os valores de impedância aferidos demonstram a efetiva continuidade elétrica da malha e a correta interligação das massas, garantindo o escoamento seguro de correntes de falta. Os resultados atendem integralmente aos parâmetros de segurança estabelecidos pelas normativas vigentes.\n\nNa data da inspeção, com base nas inspeções visuais e medições registradas neste documento, atesta-se que o sistema de aterramento do equipamento encontra-se CONFORME, estando os equipamentos APTOS PARA OPERAÇÃO.`
     : hasMeas
-    ? `Após a coleta e análise dos dados obtidos mediante medição realizada com instrumento calibrado, conclui-se que uma ou mais medições apresentaram valores de resistência ôhmica ACIMA do limite máximo de ${lim} Ohms estabelecido pela NSCI/94 e NR-12.\n\nPortanto, atesta-se que o sistema de aterramento da máquina/equipamento avaliado está INAPTO para operação, sendo necessárias intervenções corretivas no sistema de aterramento para adequação aos padrões de segurança exigidos.\n\nRecomenda-se a execução imediata de medidas corretivas, seguida de nova medição de verificação para confirmação da conformidade.`
-    : 'Laudo sem medições registradas. O parecer técnico será emitido após a realização das medições de resistência ôhmica de aterramento.';
+    ? `Após a inspeção visual, a coleta e a análise instrumental dos dados, conclui-se que o sistema de aterramento e a equipotencialização dos equipamentos avaliados NÃO atendem integralmente aos parâmetros de segurança estabelecidos pelas normativas vigentes. Os valores de impedância aferidos demonstram que uma ou mais medições apresentaram valores ACIMA do limite máximo de ${lim} Ohms estabelecido pela NR-10, ABNT NBR 5410, ABNT NBR 15749 e IN nº 19 do CBMSC.\n\nNa data da inspeção, atesta-se que o sistema de aterramento do equipamento encontra-se NÃO CONFORME, sendo necessárias intervenções corretivas imediatas no sistema de aterramento para adequação aos padrões de segurança exigidos. Recomenda-se a execução imediata de medidas corretivas, seguida de nova medição de verificação para confirmação da conformidade.`
+    : 'Laudo sem medições registradas. O parecer técnico será emitido após a realização das medições de impedância e continuidade elétrica do sistema de aterramento.';
   para(conclusion);
 
   // Status final
