@@ -379,13 +379,33 @@ export async function generateReportPDF(report, data) {
 
   // ── ITENS VERIFICADOS NO EQUIPAMENTO ──
   section('ITENS VERIFICADOS NO EQUIPAMENTO');
-  para('● Equipotencialização das Massas: Verificação da correta interligação das partes metálicas não destinadas a conduzir corrente elétrica (carcaças e chassi) ao sistema de proteção.', { justify: false });
-  y += 2;
-  para('● Integridade das Conexões: Inspeção visual e mecânica do estado de conservação, aperto e ausência de oxidação nos terminais do condutor de proteção (PE) junto ao barramento de terra no painel elétrico do equipamento.', { justify: false });
-  y += 2;
-  para('● Ensaio Instrumental no Painel Elétrico: Medição da impedância e atestação da continuidade elétrica no ponto de conexão principal do aterramento dentro do painel de comando.', { justify: false });
-  y += 2;
-  para('● Ensaios Instrumentais na Estrutura da Máquina: Aferição da continuidade elétrica em partes distintas e extremidades do equipamento (motores, zonas de aquecimento e estruturas metálicas periféricas) para garantir a ausência de seccionamentos no laço de proteção e a eficácia contra tensões de toque.', { justify: false });
+  const bulletItem = (text) => {
+    doc.setFontSize(11.5);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...COLOR_PRIMARY);
+    doc.text('\u2022', M, y);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(0, 0, 0);
+    const lines = doc.splitTextToSize(text, W - 2 * M - 6);
+    for (let i = 0; i < lines.length; i++) {
+      ensure(11.5 * 0.42 + 3.5);
+      doc.setFontSize(11.5);
+      doc.setFont(undefined, i === 0 ? 'bold' : 'normal');
+      doc.setTextColor(0, 0, 0);
+      if (i === 0) {
+        doc.text(lines[i], M + 6, y);
+      } else {
+        doc.text(lines[i], M + 6, y);
+      }
+      y += 11.5 * 0.42 + 3.5;
+    }
+    y += 3;
+  };
+
+  bulletItem('Equipotencialização das Massas: Verificação da correta interligação das partes metálicas não destinadas a conduzir corrente elétrica (carcaças e chassi) ao sistema de proteção.');
+  bulletItem('Integridade das Conexões: Inspeção visual e mecânica do estado de conservação, aperto e ausência de oxidação nos terminais do condutor de proteção (PE) junto ao barramento de terra no painel elétrico do equipamento.');
+  bulletItem('Ensaio Instrumental no Painel Elétrico: Medição da impedância e atestação da continuidade elétrica no ponto de conexão principal do aterramento dentro do painel de comando.');
+  bulletItem('Ensaios Instrumentais na Estrutura da Máquina: Aferição da continuidade elétrica em partes distintas e extremidades do equipamento (motores, zonas de aquecimento e estruturas metálicas periféricas) para garantir a ausência de seccionamentos no laço de proteção e a eficácia contra tensões de toque.');
 
   // ── 12. RESULTADOS DAS MEDIÇÕES ──
   section('RESULTADOS DAS MEDIÇÕES');
@@ -564,10 +584,10 @@ export async function generateReportPDF(report, data) {
       doc.setTextColor(0, 0, 0);
       y += headerH + 2;
 
-      // ── Fotos em grid 2 colunas ──
-      const gap = 6;
-      const cellW = (W - 2 * M - gap) / 2;
-      const maxPhotoH = 80;
+      // ── Fotos em grid 3 colunas ──
+      const gap = 4;
+      const cellW = (W - 2 * M - 2 * gap) / 3;
+      const maxPhotoH = 65;
       let col = 0;
       let rowStartY = y;
       let rowMaxH = 0;
@@ -614,7 +634,7 @@ export async function generateReportPDF(report, data) {
         doc.setTextColor(0, 0, 0);
 
         col++;
-        if (col >= 2) {
+        if (col >= 3) {
           y = rowStartY + rowMaxH + 6;
           col = 0;
           rowMaxH = 0;
