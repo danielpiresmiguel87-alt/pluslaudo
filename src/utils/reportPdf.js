@@ -321,6 +321,22 @@ export async function generateReportPDF(report, data) {
     para(instrument.especificacoes);
   }
 
+  // Certificado de Calibração (anexo ao item 5)
+  if (instrument?.certificado_calibracao_url) {
+    ensure(10);
+    doc.setFontSize(10.5);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...COLOR_PRIMARY);
+    doc.text('Certificado de Calibração/Aferição:', M, y);
+    y += 6;
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(...COLOR_ACCENT);
+    doc.setFontSize(9.5);
+    doc.text('(Anexado ao final deste documento)', M, y);
+    doc.setTextColor(0, 0, 0);
+    y += 6;
+  }
+
   // ── 6. NORMAS E REFERÊNCIAS ──
   section('NORMAS E REFERÊNCIAS');
   para(report.normas);
@@ -331,11 +347,11 @@ export async function generateReportPDF(report, data) {
 
   // ── 8. OBJETIVO ──
   section('OBJETIVO');
-  para((report.objetivo || '').replace(/\[NOME DA EMPRESA\]/g, client?.razao_social || '____________________'));
+  para(report.objetivo || '');
 
   // ── 9. METODOLOGIA ──
   section('METODOLOGIA APLICADA');
-  para((report.metodologia || '').replace(/\[INSTRUMENTO_MODELO\]/g, instrument?.marca_modelo || 'Terrômetro Digital'));
+  para(report.metodologia || '');
 
   // Diagramas ilustrativos da metodologia
   const metodologiaImgs = [
@@ -771,6 +787,63 @@ export async function generateReportPDF(report, data) {
 
   // Rodapé final
   drawFooter();
+
+  // ── ANEXO: CERTIFICADO DE CALIBRAÇÃO ──
+  if (instrument?.certificado_calibracao_url) {
+    const certUrl = instrument.certificado_calibracao_url;
+    const isCertPdf = certUrl.toLowerCase().includes('.pdf');
+    if (isCertPdf) {
+      try {
+        const pages = await renderPdfPagesToImages(certUrl);
+        for (const pageImg of pages) {
+          doc.addPage();
+          pageNum++;
+          // Título da seção de anexo
+          doc.setFillColor(...COLOR_PRIMARY);
+          doc.rect(0, 0, W, 6, 'F');
+          doc.setFontSize(11);
+          doc.setFont(undefined, 'bold');
+          doc.setTextColor(...COLOR_PRIMARY);
+          doc.text('ANEXO — CERTIFICADO DE CALIBRAÇÃO/AFERIÇÃO DO INSTRUMENTO DE MEDIÇÃO', W / 2, 16, { align: 'center' });
+          doc.setTextColor(0, 0, 0);
+          const maxW = W - 2 * M;
+          const maxH = H - 40;
+          const ratio = pageImg.h / pageImg.w;
+          let iw = maxW;
+          let ih = iw * ratio;
+          if (ih > maxH) { ih = maxH; iw = ih / ratio; }
+          addImg(doc, pageImg, (W - iw) / 2, 24, iw, ih);
+          drawFooter();
+        }
+      } catch {
+        doc.addPage();
+        pageNum++;
+        drawFooter();
+        para('Certificado de Calibração/Aferição anexado digitalmente. Consulte o sistema para acesso ao arquivo completo.');
+      }
+    } else {
+      doc.addPage();
+      pageNum++;
+      doc.setFillColor(...COLOR_PRIMARY);
+      doc.rect(0, 0, W, 6, 'F');
+      doc.setFontSize(11);
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(...COLOR_PRIMARY);
+      doc.text('ANEXO — CERTIFICADO DE CALIBRAÇÃO/AFERIÇÃO DO INSTRUMENTO DE MEDIÇÃO', W / 2, 16, { align: 'center' });
+      doc.setTextColor(0, 0, 0);
+      const img = await loadImage(certUrl);
+      if (img) {
+        const maxW = W - 2 * M;
+        const maxH = H - 40;
+        let iw = img.w; let ih = img.h;
+        const ratio = ih / iw;
+        if (iw > maxW) { iw = maxW; ih = iw * ratio; }
+        if (ih > maxH) { ih = maxH; iw = ih / ratio; }
+        addImg(doc, img, (W - iw) / 2, 24, iw, ih);
+      }
+      drawFooter();
+    }
+  }
 
   // ── ANEXO: DOCUMENTO DA ART ──
   if (report.art_documento_url) {

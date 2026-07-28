@@ -10,6 +10,7 @@ export default function Instruments() {
         { name: 'numero_serie', label: 'Número de Série' },
         { name: 'data_calibracao', label: 'Data da Calibração', type: 'date' },
         { name: 'especificacoes', label: 'Especificações Técnicas', type: 'textarea', full: true },
+        { name: 'certificado_calibracao_url', label: 'Certificado de Calibração (PDF)', type: 'file', full: true },
       ]}
     />
   );

@@ -23,11 +23,11 @@ import {
 import { formatEnvironmentConditions } from '@/utils/environment';
 import { INSPECTION_ITEMS, getDefaultInspectionStatus } from '@/utils/inspectionItems';
 
-const DEFAULT_OBJECTIVE = "O presente laudo técnico tem por objetivo avaliar as condições físicas e atestar a conformidade do sistema de aterramento de equipamentos, juntamente com o sistema de aterramento elétrico principal da instalação da empresa [NOME DA EMPRESA]. As inspeções e ensaios instrumentais realizados visam comprovar a eficácia da continuidade elétrica e da equipotencialização das massas, em estrito atendimento às exigências legais do Ministério do Trabalho e normativas técnicas vigentes, com destaque para a NR-10, ABNT NBR 5410, ABNT NBR 15749 e a Instrução Normativa nº 19 (IN 19) do Corpo de Bombeiros Militar de Santa Catarina (CBMSC).";
+const DEFAULT_OBJECTIVE = "O presente laudo técnico tem por objetivo avaliar as condições físicas e atestar a conformidade do sistema de aterramento de equipamentos, juntamente com o sistema de aterramento elétrico principal da instalação da empresa.\n\nAs inspeções e ensaios instrumentais realizados visam comprovar a eficácia da continuidade elétrica e da equipotencialização das massas, em estrito atendimento às exigências legais do Ministério do Trabalho e normativas técnicas vigentes, com destaque para a NR-10, ABNT NBR 5410, ABNT NBR 15749 e a Instrução Normativa nº 19 (IN 19) do Corpo de Bombeiros Militar de Santa Catarina (CBMSC).";
 
-const DEFAULT_METHODOLOGY = "A metodologia utilizada no presente laudo baseia-se em inspeções visuais em todos os componentes acessíveis do sistema de aterramento do equipamento e em medições da impedância e continuidade elétrica em diversos pontos da estrutura com relação ao aterramento elétrico da empresa. A medição instrumental é realizada por meio da injeção de pulso de alta corrente, metodologia que mitiga potenciais erros de leitura em função da distância ou da quantidade de hastes e ferragens paralelas presentes na malha. Para a execução dos ensaios, utilizou-se um [INSTRUMENTO_MODELO].\n\nPara a obtenção de um resultado aceitável, foram adotados os seguintes critérios:\n\n● Inspeção Visual: Deve comprovar a efetiva equipotencialização das partes metálicas não destinadas a conduzir corrente (massas), bem como a integridade física de todos os condutores de proteção, conexões, soldas e terminais.\n\n● Ensaios Instrumentais: A conformidade do sistema atestada neste documento baseia-se na comprovação da baixa impedância aferida nos testes de continuidade elétrica e na garantia de equalização de potenciais entre o equipamento e a malha de aterramento principal da edificação.";
+const DEFAULT_METHODOLOGY = "A metodologia utilizada no presente laudo baseia-se em inspeções visuais em todos os componentes acessíveis do sistema de aterramento do equipamento e em medições da impedância e continuidade elétrica em diversos pontos da estrutura com relação ao aterramento elétrico da empresa.\n\nA medição instrumental é realizada por meio da injeção de pulso de alta corrente, metodologia que mitiga potenciais erros de leitura em função da distância ou da quantidade de hastes e ferragens paralelas presentes na malha. Para a execução dos ensaios, utilizou-se um Terrômetro Digital Allnec TPA 2000.\n\nPara a obtenção de um resultado aceitável, foram adotados os seguintes critérios:\n\n● Inspeção Visual: Deve comprovar a efetiva equipotencialização das partes metálicas não destinadas a conduzir corrente (massas), bem como a integridade física de todos os condutores de proteção, conexões, soldas e terminais.\n\n● Ensaios Instrumentais: A conformidade do sistema atestada neste documento baseia-se na comprovação da baixa impedância aferida nos testes de continuidade elétrica e na garantia de equalização de potenciais entre o equipamento e a malha de aterramento principal da edificação.";
 
-const DEFAULT_RECOMMENDATIONS = "Considerando que o sistema de aterramento do equipamento inspecionado encontra-se em conformidade, recomenda-se à contratante a manutenção rigorosa das rotinas de inspeção visual periódica. É crucial garantir que as conexões mecânicas, os condutores de proteção (PE) não sofram desgastes ou oxidações devido à dinâmica da operação industrial, prevenindo o risco de choque elétrico aos colaboradores.\n\nPara a manutenção desta conformidade e atendimento à NR-10, uma nova bateria de ensaios instrumentais deverá ser programada anualmente ou sempre que houver qualquer intervenção estrutural, elétrica ou remanejamento físico do equipamento.";
+const DEFAULT_RECOMMENDATIONS = "Considerando que o sistema de aterramento do equipamento inspecionado encontra-se em conformidade, recomenda-se à contratante a manutenção rigorosa das rotinas de inspeção visual/manutenção. É crucial garantir que as conexões mecânicas e os condutores de proteção (PE) não sofram desgastes, afrouxamentos ou oxidações decorrentes da dinâmica da operação industrial, prevenindo assim o risco de choque elétrico aos colaboradores.\n\nPara a manutenção desta conformidade e em estrito atendimento às diretrizes da NR-10 e da NR-12, uma nova bateria de ensaios instrumentais deverá ser programada anualmente. Ensaios e inspeções adicionais deverão ser realizados, obrigatoriamente, sempre que houver intervenções elétricas, reformas estruturais, substituição ou remanejamento físico do equipamento, bem como perante a identificação de qualquer anomalia no funcionamento do sistema.\n\nRessalta-se que a contratante deve manter os registros atualizados de todas as medições e rotinas de manutenção, preferencialmente integrados ao Prontuário de Instalações Elétricas (PIE) e ao manual/registro de manutenção da máquina. Por fim, conforme exigência legal, todas as intervenções futuras no sistema de aterramento deverão ser executadas exclusivamente por Profissional Legalmente Habilitado, com a respectiva emissão da Anotação de Responsabilidade Técnica (ART).";
 
 const DEFAULT_NORMAS = "NR-10\nNR-12\nABNT NBR 5410\nABNT NBR 15749\nIN nº 19 (CBMSC)";
 
@@ -55,7 +55,8 @@ export default function ReportForm() {
   const [clientForm, setClientForm] = useState({ razao_social: '', cnpj: '', endereco: '', cidade: '', cep: '', bairro: '', fone: '' });
   const [clientLookingUp, setClientLookingUp] = useState(false);
   const [showInstrumentDialog, setShowInstrumentDialog] = useState(false);
-  const [instrumentForm, setInstrumentForm] = useState({ marca_modelo: '', numero_serie: '', data_calibracao: '', especificacoes: '' });
+  const [instrumentForm, setInstrumentForm] = useState({ marca_modelo: '', numero_serie: '', data_calibracao: '', especificacoes: '', certificado_calibracao_url: '' });
+  const [uploadingCertificado, setUploadingCertificado] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [draftSaved, setDraftSaved] = useState(false);
   const [uploadingArt, setUploadingArt] = useState(false);
@@ -511,6 +512,37 @@ export default function ReportForm() {
             <div><Label>Número de Série</Label><Input value={instrumentForm.numero_serie} onChange={e => setInstrumentForm(s => ({ ...s, numero_serie: e.target.value }))} /></div>
             <div><Label>Data de Calibração</Label><Input type="date" value={instrumentForm.data_calibracao} onChange={e => setInstrumentForm(s => ({ ...s, data_calibracao: e.target.value }))} /></div>
             <div><Label>Especificações</Label><Textarea value={instrumentForm.especificacoes} onChange={e => setInstrumentForm(s => ({ ...s, especificacoes: e.target.value }))} rows={3} /></div>
+            <div>
+              <Label>Certificado de Calibração (PDF)</Label>
+              {instrumentForm.certificado_calibracao_url ? (
+                <div className="flex items-center gap-2 mt-1">
+                  <a href={instrumentForm.certificado_calibracao_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-blue-600 hover:underline flex-1 truncate">
+                    <FileText className="h-4 w-4 shrink-0" /> Certificado anexado
+                  </a>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setInstrumentForm(s => ({ ...s, certificado_calibracao_url: '' }))}>Remover</Button>
+                </div>
+              ) : (
+                <label className="cursor-pointer block mt-1">
+                  <div className="flex items-center justify-center gap-2 border-2 border-dashed border-input rounded-md h-16 hover:bg-accent/50 transition-colors">
+                    {uploadingCertificado ? (
+                      <><Loader2 className="h-4 w-4 animate-spin" /><span className="text-sm text-muted-foreground">Enviando...</span></>
+                    ) : (
+                      <><Upload className="h-4 w-4 text-muted-foreground" /><span className="text-sm text-muted-foreground">Clique para anexar o PDF do certificado</span></>
+                    )}
+                  </div>
+                  <input type="file" accept="application/pdf" className="hidden" disabled={uploadingCertificado} onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    setUploadingCertificado(true);
+                    try {
+                      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+                      setInstrumentForm(s => ({ ...s, certificado_calibracao_url: file_url }));
+                    } catch (err) { alert('Erro ao enviar certificado: ' + err.message); }
+                    setUploadingCertificado(false);
+                  }} />
+                </label>
+              )}
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowInstrumentDialog(false)}>Cancelar</Button>
@@ -520,7 +552,7 @@ export default function ReportForm() {
               const created = await base44.entities.Instrument.create(instrumentForm);
               setInstruments(s => [...s, created]);
               set('instrumento_id', created.id);
-              setInstrumentForm({ marca_modelo: '', numero_serie: '', data_calibracao: '', especificacoes: '' });
+              setInstrumentForm({ marca_modelo: '', numero_serie: '', data_calibracao: '', especificacoes: '', certificado_calibracao_url: '' });
               setShowInstrumentDialog(false);
             }}>Salvar Instrumento</Button>
           </DialogFooter>
