@@ -86,16 +86,20 @@ export default function ReportForm() {
       });
       setLoading(false);
     }
+    // Entidades de domínio (acessível a qualquer usuário autenticado)
     Promise.all([
       base44.entities.Client.list(),
-      base44.entities.User.list(),
       base44.entities.Instrument.list(),
       base44.entities.Engineer.list(),
       base44.entities.Electrician.list(),
-    ]).then(([c, u, i, engs, elecs]) => {
-      setClients(c); setUsers(u); setInstruments(i);
+    ]).then(([c, i, engs, elecs]) => {
+      setClients(c); setInstruments(i);
       setEngineers(engs); setElectricians(elecs);
-    });
+    }).catch(() => {});
+    // User.list() só funciona para admins; isolado para não bloquear os demais dropdowns
+    base44.entities.User.list()
+      .then(setUsers)
+      .catch(() => setUsers([]));
     if (!isNew && !draft) {
       base44.entities.Report.get(id).then(r => {
         setForm({
