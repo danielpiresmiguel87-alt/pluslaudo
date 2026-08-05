@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
-import { FileText, Clock, CheckCircle, ClipboardList, AlertTriangle, CalendarClock, Copy, Check, Loader2 } from 'lucide-react';
+import { FileText, Clock, CheckCircle, ClipboardList, AlertTriangle, CalendarClock, Copy, Check, Loader2, Trash2 } from 'lucide-react';
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -33,7 +33,7 @@ function getValidadeInfo(r) {
   return null;
 }
 
-export default function ReportList({ reports, clients, onNavigate, userRole }) {
+export default function ReportList({ reports, clients, onNavigate, onDeleted, userRole }) {
   const clientMap = React.useMemo(() => {
     const m = {};
     clients.forEach(c => { m[c.id] = c; });
@@ -42,7 +42,22 @@ export default function ReportList({ reports, clients, onNavigate, userRole }) {
 
   const [copiedId, setCopiedId] = useState(null);
   const [loadingId, setLoadingId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
   const canCopyLink = userRole === 'admin' || userRole === 'coordenador' || userRole === 'engenheiro';
+  const canDelete = userRole === 'admin' || userRole === 'coordenador';
+
+  const handleDelete = async (e, reportId) => {
+    e.stopPropagation();
+    if (!window.confirm('Tem certeza que deseja excluir este laudo? Esta ação não pode ser desfeita.')) return;
+    setDeletingId(reportId);
+    try {
+      await base44.entities.Report.delete(reportId);
+      if (onDeleted) onDeleted(reportId);
+    } catch (err) {
+      alert('Erro ao excluir laudo: ' + (err?.message || ''));
+    }
+    setDeletingId(null);
+  };
 
   const handleCopyLink = async (e, reportId) => {
     e.stopPropagation();
@@ -134,6 +149,23 @@ export default function ReportList({ reports, clients, onNavigate, userRole }) {
                         <Copy className="h-3 w-3 mr-1" />
                       )}
                       {copiedId === r.id ? 'Copiado!' : 'Copiar Link'}
+                    </Button>
+                  )}
+                  {canDelete && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs px-2 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300"
+                      onClick={(e) => handleDelete(e, r.id)}
+                      disabled={deletingId === r.id}
+                    >
+                      {deletingId === r.id ? (
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-3 w-3 mr-1" />
+                      )}
+                      Excluir
                     </Button>
                   )}
                 </div>
