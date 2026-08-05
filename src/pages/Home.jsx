@@ -105,6 +105,12 @@ export default function Home() {
       .sort((a, b) => a.v.days - b.v.days);
   }, [visibleReports]);
 
+  const clientMap = useMemo(() => {
+    const m = {};
+    clients.forEach(c => { m[c.id] = c; });
+    return m;
+  }, [clients]);
+
   const pendentes = useMemo(() => {
     return visibleReports.filter(r => {
       const ws = r.workflow_status || 'rascunho';
@@ -192,6 +198,9 @@ export default function Home() {
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground">{r.local}</p>
+                      {clientMap[r.cliente_id] && (
+                        <p className="text-xs text-muted-foreground">Empresa: {clientMap[r.cliente_id].razao_social}</p>
+                      )}
                     </div>
                     <Badge variant="secondary" className="text-amber-700 bg-amber-100">{label}</Badge>
                   </div>
