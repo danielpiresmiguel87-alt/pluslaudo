@@ -423,13 +423,7 @@ export async function generateReportPDF(report, data) {
   kv('Equipamento Avaliado', report.equipamento);
   kv('Tag de Identificação', report.tag_equipamento);
   kv('Limite de Referência', `${lim} Ohms`);
-  kv('Norma de Referência', 'NSCI/94 - Máximo 10 Ohms');
-  y += 2;
-  doc.setFontSize(10);
-  doc.setFont(undefined, 'italic');
-  doc.setTextColor(...COLOR_GRAY);
-  doc.text('Conforme NSCI/94, o valor de resistência ôhmica do sistema de aterramento não pode ser superior a 10 Ohms em qualquer período do ano.', M, y, { maxWidth: W - 2 * M });
-  y += 8;
+  y += 4;
   doc.setTextColor(0, 0, 0);
 
   // ── ITENS VERIFICADOS NO EQUIPAMENTO ──
