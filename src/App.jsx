@@ -23,6 +23,7 @@ import ResetPassword from '@/pages/ResetPassword';
 import Nr12Dashboard from '@/pages/nr12/Dashboard';
 import Nr12Maquinas from '@/pages/nr12/MaquinasList';
 import Nr12MaquinaForm from '@/pages/nr12/MaquinaForm';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, navigateToLogin } = useAuth();
@@ -79,9 +80,9 @@ const AuthenticatedApp = () => {
     <Routes>
       <Route element={<Layout />}>
         <Route path="/" element={<Home />} />
-        <Route path="/reports/new" element={<ReportForm />} />
-        <Route path="/reports/:id/edit" element={<ReportForm />} />
-        <Route path="/reports/:id" element={<ReportView />} />
+        <Route path="/reports/new" element={<ErrorBoundary><ReportForm /></ErrorBoundary>} />
+        <Route path="/reports/:id/edit" element={<ErrorBoundary><ReportForm /></ErrorBoundary>} />
+        <Route path="/reports/:id" element={<ErrorBoundary><ReportView /></ErrorBoundary>} />
         <Route path="/clients" element={<Clients />} />
         <Route path="/users" element={<UsersPage />} />
         <Route path="/instruments" element={<Instruments />} />
