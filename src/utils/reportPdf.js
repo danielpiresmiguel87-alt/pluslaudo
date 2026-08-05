@@ -68,6 +68,19 @@ function addImg(doc, imgData, x, y, w, h) {
   }
 }
 
+// Quebra o texto em linhas que cabem em maxW; se passar de maxLines, trunca com "…".
+function fitLines(doc, text, maxW, maxLines = 2) {
+  if (!text) return [];
+  const lines = doc.splitTextToSize(text, maxW);
+  if (lines.length <= maxLines) return lines;
+  const kept = lines.slice(0, maxLines);
+  // Trunca a última linha para incluir reticências
+  let last = kept[maxLines - 1];
+  while (doc.getTextWidth(last + '…') > maxW && last.length > 0) last = last.slice(0, -1);
+  kept[maxLines - 1] = last + '…';
+  return kept;
+}
+
 export async function generateReportPDF(report, data) {
   const { company, client, engineer, electrician, instrument } = data;
   const doc = new jsPDF('p', 'mm', 'a4');
@@ -750,13 +763,15 @@ export async function generateReportPDF(report, data) {
   doc.setFontSize(10);
   doc.setFont(undefined, 'bold');
   doc.setTextColor(...COLOR_PRIMARY);
-  doc.text(engineer?.nome || '_______________________________', engX, sigY + 5);
+  const engLines = fitLines(doc, engineer?.nome || '_______________________________', sigW, 2);
+  const engLabelOff = 5 + engLines.length * 4.5;
+  engLines.forEach((l, i) => doc.text(l, engX, sigY + 5 + i * 4.5));
   doc.setFont(undefined, 'normal');
   doc.setFontSize(9);
   doc.setTextColor(...COLOR_GRAY);
-  doc.text('Engenheiro Eletricista Responsável', engX, sigY + 10);
+  doc.text('Engenheiro Eletricista Responsável', engX, sigY + engLabelOff);
   if (engineer?.crea_sc) {
-    doc.text(`CREA-SC: ${engineer.crea_sc}`, engX, sigY + 15);
+    doc.text(`CREA-SC: ${engineer.crea_sc}`, engX, sigY + engLabelOff + 5);
   }
   doc.setTextColor(0, 0, 0);
 
@@ -773,13 +788,15 @@ export async function generateReportPDF(report, data) {
   doc.setFontSize(10);
   doc.setFont(undefined, 'bold');
   doc.setTextColor(...COLOR_PRIMARY);
-  doc.text(client?.razao_social || '_______________________________', cliX, sigY + 5);
+  const cliLines = fitLines(doc, client?.razao_social || '_______________________________', sigW, 2);
+  const cliLabelOff = 5 + cliLines.length * 4.5;
+  cliLines.forEach((l, i) => doc.text(l, cliX, sigY + 5 + i * 4.5));
   doc.setFont(undefined, 'normal');
   doc.setFontSize(9);
   doc.setTextColor(...COLOR_GRAY);
-  doc.text('Cliente / Contratante', cliX, sigY + 10);
+  doc.text('Cliente / Contratante', cliX, sigY + cliLabelOff);
   if (client?.cnpj) {
-    doc.text(`CNPJ: ${client.cnpj}`, cliX, sigY + 15);
+    doc.text(`CNPJ: ${client.cnpj}`, cliX, sigY + cliLabelOff + 5);
   }
   doc.setTextColor(0, 0, 0);
 
