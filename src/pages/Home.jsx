@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, AlertTriangle, CalendarClock } from 'lucide-react';
+import { Plus, AlertTriangle, CalendarClock, Trash2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import SummaryCards from '@/components/dashboard/SummaryCards';
 import ReportList from '@/components/dashboard/ReportList';
@@ -37,6 +37,7 @@ export default function Home() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterWorkflow, setFilterWorkflow] = useState('all');
   const [search, setSearch] = useState('');
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     base44.auth.me().then(setCurrentUser).catch(() => setLoading(false));
@@ -117,6 +118,19 @@ export default function Home() {
       return ws === 'pendente_medicao' || ws === 'pendente_revisao';
     });
   }, [visibleReports]);
+
+  const handleDeletePendente = async (id) => {
+    if (!window.confirm('Excluir este laudo definitivamente?')) return;
+    setDeletingId(id);
+    try {
+      await base44.entities.Report.delete(id);
+      setReports(prev => prev.filter(r => r.id !== id));
+    } catch (e) {
+      alert('Erro ao excluir laudo.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const title = isEletricista ? 'Medições Pendentes' : isEngenheiro ? 'Laudos para Revisão' : 'Dashboard de Laudos';
 
@@ -202,7 +216,18 @@ export default function Home() {
                         <p className="text-xs text-muted-foreground">Empresa: {clientMap[r.cliente_id].razao_social}</p>
                       )}
                     </div>
-                    <Badge variant="secondary" className="text-amber-700 bg-amber-100">{label}</Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="text-amber-700 bg-amber-100">{label}</Badge>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                        disabled={deletingId === r.id}
+                        onClick={(e) => { e.stopPropagation(); handleDeletePendente(r.id); }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 );
               })}
