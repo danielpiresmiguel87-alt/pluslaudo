@@ -29,6 +29,8 @@ export default function ReportView() {
   const [linkSent, setLinkSent] = useState(false);
   const [signingUrl, setSigningUrl] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
   const engSigRef = useRef(null);
   const cliSigRef = useRef(null);
 
@@ -58,8 +60,31 @@ export default function ReportView() {
           : electricians.find(e => e.id === r.eletricista_id),
         instrument: instruments.find(i => i.id === r.instrumento_id),
       });
-    })();
-  }, [id]);
+      })();
+      }, [id]);
+
+      useEffect(() => {
+      if (!report || !data.company) return;
+      let revoked = false;
+      let blobUrl = null;
+      setPdfLoading(true);
+      (async () => {
+      try {
+       const doc = await generateReportPDF(report, data);
+       const blob = doc.output('blob');
+       blobUrl = URL.createObjectURL(blob);
+       if (!revoked) setPdfPreviewUrl(blobUrl);
+      } catch (e) {
+       console.error('Erro ao gerar prévia do PDF:', e);
+      } finally {
+       if (!revoked) setPdfLoading(false);
+      }
+      })();
+      return () => {
+      revoked = true;
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+      };
+      }, [report, data]);
 
   const handleSendForSignature = async (reopen = false) => {
     setSendingLink(true);
@@ -445,6 +470,27 @@ export default function ReportView() {
               );
             })}
           </div>
+        )}
+      </Section>
+
+      <Section title="Documento do Laudo (PDF)">
+        <div className="flex gap-2 flex-wrap mb-3 print:hidden">
+          <Button variant="outline" size="sm" onClick={handlePrint} disabled={exporting || pdfLoading}>
+            <Printer className="h-4 w-4 mr-2" />{exporting ? 'Gerando...' : 'Imprimir'}
+          </Button>
+          <Button size="sm" onClick={handlePdf} disabled={exporting || pdfLoading}>
+            <Download className="h-4 w-4 mr-2" />{exporting ? 'Gerando...' : 'Exportar PDF'}
+          </Button>
+        </div>
+        {pdfLoading ? (
+          <div className="flex items-center justify-center text-sm text-muted-foreground py-12">
+            <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-700 rounded-full animate-spin mr-3" />
+            Gerando documento...
+          </div>
+        ) : pdfPreviewUrl ? (
+          <PdfViewer url={pdfPreviewUrl} />
+        ) : (
+          <p className="text-sm text-muted-foreground">Não foi possível gerar a prévia do documento.</p>
         )}
       </Section>
 
