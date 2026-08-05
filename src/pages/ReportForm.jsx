@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
+import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -57,7 +58,7 @@ export default function ReportForm() {
   const [showInstrumentDialog, setShowInstrumentDialog] = useState(false);
   const [instrumentForm, setInstrumentForm] = useState({ marca_modelo: '', numero_serie: '', data_calibracao: '', especificacoes: '', certificado_calibracao_url: '' });
   const [uploadingCertificado, setUploadingCertificado] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
+  const { user: currentUser } = useAuth();
   const [draftSaved, setDraftSaved] = useState(false);
   const [uploadingArt, setUploadingArt] = useState(false);
 
@@ -76,7 +77,6 @@ export default function ReportForm() {
   const draftKey = isNew ? 'report_draft' : `report_draft_${id}`;
 
   useEffect(() => {
-    base44.auth.me().then(setCurrentUser).catch(() => {});
     const draft = carregarRascunho(draftKey);
     if (draft) {
       setForm({
