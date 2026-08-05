@@ -407,6 +407,7 @@ export async function generateReportPDF(report, data) {
     const textW = W - 2 * M - textIndent - 12;
 
     doc.setFontSize(11.5);
+    doc.setFont(undefined, 'bold');
     const lines = doc.splitTextToSize(fullText, textW);
     const blockH = Math.max(checkboxSize, lines.length * (11.5 * 0.42 + 3.5)) + 4;
     ensure(blockH);
@@ -428,7 +429,6 @@ export async function generateReportPDF(report, data) {
 
     // Label (bold) + description (normal)
     doc.setFontSize(11.5);
-    doc.setFont(undefined, 'bold');
     doc.setTextColor(...COLOR_PRIMARY);
     doc.text(lines[0], M + textIndent, y);
 
