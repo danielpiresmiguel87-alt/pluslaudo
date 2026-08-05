@@ -84,10 +84,10 @@ export default function PdfViewer({ url }) {
   return (
     <div className="pdf-viewer-container space-y-4">
       {Array.from({ length: numPages }).map((_, i) => (
-        <div key={i} className="pdf-page-container" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+        <div key={i} className="pdf-page-container w-full" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
           <canvas
             ref={el => { canvasRefs.current[i] = el; }}
-            style={{ maxWidth: '100%', height: 'auto', display: 'block', margin: '0 auto' }}
+            style={{ width: '100%', height: 'auto', display: 'block', margin: '0 auto' }}
           />
         </div>
       ))}
