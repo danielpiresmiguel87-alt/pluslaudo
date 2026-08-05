@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
-import { Plus, Pencil, Trash2, X, Search, Upload } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Search, Upload, FileText } from 'lucide-react';
 
 export default function EntityCrudPage({ entityName, title, fields }) {
   const [items, setItems] = useState([]);
@@ -15,6 +15,18 @@ export default function EntityCrudPage({ entityName, title, fields }) {
   const [form, setForm] = useState({});
   const [lookingUp, setLookingUp] = useState(false);
   const [uploadingField, setUploadingField] = useState(null);
+
+  const handleFileUpload = async (field, file) => {
+    if (!file) return;
+    setUploadingField(field);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setForm(s => ({ ...s, [field]: file_url }));
+    } catch (e) {
+      alert('Erro ao enviar arquivo: ' + e.message);
+    }
+    setUploadingField(null);
+  };
 
   const handleImageUpload = async (field, file) => {
     if (!file) return;
@@ -109,6 +121,29 @@ export default function EntityCrudPage({ entityName, title, fields }) {
                         onChange={e => { const file = e.target.files?.[0]; if (file) handleImageUpload(f.name, file); e.target.value = ''; }} />
                     </div>
                   </div>
+                ) : f.type === 'file' ? (
+                  <div className="space-y-2">
+                    {form[f.name] && (
+                      <div className="flex items-center gap-2">
+                        <a href={form[f.name]} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-blue-600 hover:underline truncate flex-1">
+                          <FileText className="h-4 w-4 shrink-0" /> Arquivo anexado
+                        </a>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => setForm(s => ({ ...s, [f.name]: '' }))}>
+                          Remover
+                        </Button>
+                      </div>
+                    )}
+                    {!form[f.name] && (
+                      <div className="flex gap-2">
+                        <Button type="button" variant="outline" size="sm" disabled={uploadingField === f.name}
+                          onClick={() => document.getElementById(`upload-${f.name}`).click()}>
+                          <Upload className="h-4 w-4 mr-1" /> {uploadingField === f.name ? 'Enviando...' : 'Enviar Arquivo'}
+                        </Button>
+                        <input id={`upload-${f.name}`} type="file" accept="application/pdf" className="hidden"
+                          onChange={e => { const file = e.target.files?.[0]; if (file) handleFileUpload(f.name, file); e.target.value = ''; }} />
+                      </div>
+                    )}
+                  </div>
                 ) : f.type === 'textarea' ? (
                   <Textarea value={form[f.name] || ''} onChange={e => setForm(s => ({ ...s, [f.name]: e.target.value }))} rows={3} />
                 ) : f.lookup === 'cnpj' ? (
@@ -140,11 +175,23 @@ export default function EntityCrudPage({ entityName, title, fields }) {
             <Card key={item.id}>
               <CardContent className="pt-6">
                 <div className="flex justify-between items-start">
-                  <div className="space-y-1">
-                    {fields.filter(f => f.type !== 'image').map(f => (
-                      <div key={f.name} className="text-sm">
+                  <div className="space-y-1 min-w-0 flex-1">
+                    {fields.filter(f => f.type !== 'image' && f.type !== 'file').map(f => (
+                      <div key={f.name} className="text-sm break-words">
                         <span className="text-xs text-muted-foreground">{f.label}: </span>
                         <span className="font-medium">{item[f.name] || '-'}</span>
+                      </div>
+                    ))}
+                    {fields.filter(f => f.type === 'file').map(f => (
+                      <div key={f.name} className="text-sm">
+                        <span className="text-xs text-muted-foreground">{f.label}: </span>
+                        {item[f.name] ? (
+                          <a href={item[f.name]} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-blue-600 hover:underline font-medium align-middle">
+                            <FileText className="h-3.5 w-3.5 shrink-0" /> Ver arquivo
+                          </a>
+                        ) : (
+                          <span className="font-medium">-</span>
+                        )}
                       </div>
                     ))}
                   </div>
