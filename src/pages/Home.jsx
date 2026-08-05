@@ -185,7 +185,12 @@ export default function Home() {
                   <div key={r.id} className="flex items-center justify-between bg-white rounded-lg border px-3 py-2 cursor-pointer hover:shadow-sm transition"
                     onClick={() => navigate(`/reports/${r.id}`)}>
                     <div>
-                      <p className="font-medium text-sm">{r.equipamento || 'Sem equipamento'}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-sm">{r.equipamento || 'Sem equipamento'}</p>
+                        {r.tag_equipamento && (
+                          <Badge variant="outline" className="text-xs font-mono">{r.tag_equipamento}</Badge>
+                        )}
+                      </div>
                       <p className="text-xs text-muted-foreground">{r.local}</p>
                     </div>
                     <Badge variant="secondary" className="text-amber-700 bg-amber-100">{label}</Badge>
