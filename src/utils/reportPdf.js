@@ -60,6 +60,26 @@ function formatDate(d) {
   try { return new Date(d).toLocaleDateString('pt-BR'); } catch { return d; }
 }
 
+// Sanitiza texto para a fonte padrão (WinAnsi) do jsPDF.
+// Caracteres Unicode como ● (U+25CF), – (U+2013), — (U+2014), aspas curvas etc.
+// não são suportados pela fonte Helvetica padrão, causando artefatos ("İ")
+// E largura calculada incorretamente por splitTextToSize → estouro da margem.
+function sanitizeText(text) {
+  if (text == null) return text;
+  if (typeof text !== 'string') return String(text);
+  return text
+    .replace(/●/g, '\u2022')   // círculo preto → bullet (suportado em WinAnsi 0x95)
+    .replace(/[–—]/g, '-')       // en-dash / em-dash → hífen
+    .replace(/['']/g, "'")      // aspas simples curvas → reta
+    .replace(/[""]/g, '"')      // aspas duplas curvas → retas
+    .replace(/\u2026/g, '...')  // reticências
+    .replace(/\u00A0/g, ' ')    // no-break space → space
+    .replace(/\u2002|\u2003|\u2009/g, ' ') // various spaces
+    // Remove quaisquer caracteres fora do WinAnsi (Latin-1 + complementos)
+    // para evitar overflow por largura mal calculada
+    .replace(/[^\x20-\x7E\u00A0-\u017F\u2022]/g, '');
+}
+
 function addImg(doc, imgData, x, y, w, h) {
   if (imgData.img) {
     doc.addImage(imgData.img, x, y, w, h);
@@ -71,7 +91,9 @@ function addImg(doc, imgData, x, y, w, h) {
 // Quebra o texto em linhas que cabem em maxW; se passar de maxLines, trunca com "…".
 function fitLines(doc, text, maxW, maxLines = 2) {
   if (!text) return [];
-  const lines = doc.splitTextToSize(text, maxW);
+  const clean = sanitizeText(text);
+  if (!clean) return [];
+  const lines = doc.splitTextToSize(clean, maxW);
   if (lines.length <= maxLines) return lines;
   const kept = lines.slice(0, maxLines);
   // Trunca a última linha para incluir reticências
@@ -135,17 +157,18 @@ export async function generateReportPDF(report, data) {
     doc.setFontSize(12);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(255, 255, 255);
-    doc.text(`${secNum}. ${title}`, M + 3, y + 1);
+    doc.text(sanitizeText(`${secNum}. ${title}`), M + 3, y + 1);
     doc.setTextColor(0, 0, 0);
     y += 12;
   };
 
   const kv = (label, value, labelW = 50) => {
-    const val = value || '-';
+    const val = sanitizeText(value || '-');
+    const lbl = sanitizeText(label);
     doc.setFontSize(10.5);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...COLOR_PRIMARY);
-    const labelLines = doc.splitTextToSize(label + ':', labelW - 3);
+    const labelLines = doc.splitTextToSize(lbl + ':', labelW - 3);
     const valLines = doc.splitTextToSize(val, W - 2 * M - labelW);
     const maxLines = Math.max(labelLines.length, valLines.length);
     ensure(6 * maxLines + 2);
@@ -158,12 +181,14 @@ export async function generateReportPDF(report, data) {
 
   const para = (text, opts = {}) => {
     if (!text) return;
+    const clean = sanitizeText(text);
+    if (!clean) return;
     const size = opts.size || 11.5;
     const justify = opts.justify !== false;
     doc.setFontSize(size);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(0, 0, 0);
-    const lines = doc.splitTextToSize(text, W - 2 * M);
+    const lines = doc.splitTextToSize(clean, W - 2 * M);
     for (const l of lines) {
       ensure(size * 0.42 + 3.5);
       // ensure() pode chamar drawFooter() que altera fonte/tamanho — redefinir
@@ -260,19 +285,19 @@ export async function generateReportPDF(report, data) {
   doc.text('Equipamento:', M + 4, y + 7);
   doc.setFont(undefined, 'normal');
   doc.setTextColor(0, 0, 0);
-  doc.text(report.equipamento || '-', M + 38, y + 7);
+  doc.text(sanitizeText(report.equipamento || '-'), M + 38, y + 7);
   doc.setFont(undefined, 'bold');
   doc.setTextColor(...COLOR_PRIMARY);
   doc.text('Tag:', M + 4, y + 13);
   doc.setFont(undefined, 'normal');
   doc.setTextColor(0, 0, 0);
-  doc.text(report.tag_equipamento || '-', M + 38, y + 13);
+  doc.text(sanitizeText(report.tag_equipamento || '-'), M + 38, y + 13);
   doc.setFont(undefined, 'bold');
   doc.setTextColor(...COLOR_PRIMARY);
   doc.text('Local / Data:', M + 4, y + 19);
   doc.setFont(undefined, 'normal');
   doc.setTextColor(0, 0, 0);
-  doc.text(`${report.local || '-'}${report.data ? ' - ' + formatDate(report.data) : ''}`, M + 38, y + 19);
+  doc.text(sanitizeText(`${report.local || '-'}${report.data ? ' - ' + formatDate(report.data) : ''}`), M + 38, y + 19);
   doc.setTextColor(0, 0, 0);
   y += 30;
 
@@ -416,7 +441,7 @@ export async function generateReportPDF(report, data) {
 
   INSPECTION_ITEMS.forEach((item, idx) => {
     const ok = itensVerificados[idx] !== false;
-    const fullText = `${item.label}: ${item.description}`;
+    const fullText = sanitizeText(`${item.label}: ${item.description}`);
     const textW = W - 2 * M - textIndent - 12;
 
     doc.setFontSize(11.5);
@@ -510,7 +535,7 @@ export async function generateReportPDF(report, data) {
 
       doc.setFontSize(9.5);
       doc.setFont(undefined, 'normal');
-      const descLines = doc.splitTextToSize(m.descricao || '-', colW[1] - 4);
+      const descLines = doc.splitTextToSize(sanitizeText(m.descricao || '-'), colW[1] - 4);
       const rowH = Math.max(8, 5.5 * descLines.length + 3);
 
       // Se a linha não couber, fecha a borda da página atual e repete o cabeçalho na nova
@@ -620,7 +645,7 @@ export async function generateReportPDF(report, data) {
       doc.text('LOCAL:', labelX, y + 9);
       doc.setFont(undefined, 'normal');
       doc.setTextColor(...COLOR_GRAY);
-      doc.text(m.descricao || '-', localX, y + 9);
+      doc.text(sanitizeText(m.descricao || '-'), localX, y + 9);
 
       doc.setFont(undefined, 'bold');
       doc.setTextColor(...COLOR_PRIMARY);
@@ -682,9 +707,9 @@ export async function generateReportPDF(report, data) {
         doc.setFont(undefined, 'italic');
         doc.setTextColor(...COLOR_PRIMARY);
         const legenda = m.descricao
-          ? `Foto ${fotoNum} — ${m.descricao}`
+          ? sanitizeText(`Foto ${fotoNum} - ${m.descricao}`)
           : `Foto ${fotoNum}`;
-        const capLines = doc.splitTextToSize(legenda, cellW - 2);
+        const capLines = doc.splitTextToSize(sanitizeText(legenda), cellW - 2);
         doc.text(capLines[0] || legenda, cx + iw / 2, cy + ih + 4.5, { align: 'center' });
         doc.setTextColor(0, 0, 0);
 
