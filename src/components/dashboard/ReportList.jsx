@@ -126,12 +126,17 @@ export default function ReportList({ reports, clients, onNavigate, onDeleted, us
                     <WfIcon className="h-3 w-3 mr-1" />
                     {WORKFLOW_LABELS[ws]}
                   </Badge>
-                  <Badge
-                    variant={r.status === 'aprovado' ? 'default' : r.status === 'reprovado' ? 'destructive' : 'secondary'}
-                    className={r.status === 'aprovado' ? 'bg-green-600 hover:bg-green-600' : ''}
-                  >
-                    {r.status === 'aprovado' ? 'Aprovado' : r.status === 'reprovado' ? 'Reprovado' : 'Rascunho'}
-                  </Badge>
+                  {(() => {
+                    const isConcluido = ws === 'concluido';
+                    return (
+                      <Badge
+                        variant={isConcluido ? 'default' : r.status === 'reprovado' ? 'destructive' : 'secondary'}
+                        className={isConcluido ? 'bg-green-600 hover:bg-green-600' : ''}
+                      >
+                        {isConcluido ? 'Concluído' : r.status === 'aprovado' ? 'Aprovado' : r.status === 'reprovado' ? 'Reprovado' : 'Rascunho'}
+                      </Badge>
+                    );
+                  })()}
                   {canCopyLink && (
                     <Button
                       type="button"

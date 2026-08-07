@@ -82,7 +82,7 @@ export default function Home() {
   }, [visibleReports, filterClient, filterStatus, filterWorkflow, search]);
 
   const stats = useMemo(() => {
-    const aprovados = visibleReports.filter(r => r.status === 'aprovado').length;
+    const concluidos = visibleReports.filter(r => (r.workflow_status || 'rascunho') === 'concluido').length;
     const reprovados = visibleReports.filter(r => r.status === 'reprovado').length;
     const pendentes = visibleReports.filter(r => {
       const ws = r.workflow_status || 'rascunho';
@@ -96,7 +96,7 @@ export default function Home() {
       const v = getValidadeInfo(r);
       return v && v.days < 0;
     }).length;
-    return { total: visibleReports.length, aprovados, reprovados, pendentes, vencendo, vencidos };
+    return { total: visibleReports.length, concluidos, reprovados, pendentes, vencendo, vencidos };
   }, [visibleReports]);
 
   const aVencer = useMemo(() => {
@@ -153,8 +153,9 @@ export default function Home() {
         setSearch('');
         setFilterClient('all');
         if (!f) { setFilterStatus('all'); setFilterWorkflow('all'); }
-        else if (f === 'aprovado' || f === 'reprovado') { setFilterStatus(f); setFilterWorkflow('all'); }
+        else if (f === 'reprovado') { setFilterStatus(f); setFilterWorkflow('all'); }
         else if (f === 'pendente') { setFilterStatus('all'); setFilterWorkflow('pendente_medicao'); }
+        else if (f === 'concluido') { setFilterStatus('all'); setFilterWorkflow('concluido'); }
         else { setFilterStatus('all'); setFilterWorkflow('all'); }
       }} />
 
