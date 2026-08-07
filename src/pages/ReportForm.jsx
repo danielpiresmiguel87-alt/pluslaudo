@@ -36,7 +36,7 @@ const DEFAULT_NORMAS = "NR-10\nNR-12\nABNT NBR 5410\nABNT NBR 15749\nIN nº 19 (
 function computeWorkflowStatus(measurements, status, hasArt, currentWs, explicitWs) {
   if (explicitWs) return explicitWs;
   const cur = currentWs || 'rascunho';
-  if (measurements.length > 0 && status === 'aprovado' && hasArt) return 'concluido';
+  if (measurements.length > 0 && status === 'aprovado') return 'concluido';
   if (measurements.length > 0 && (cur === 'rascunho' || cur === 'pendente_medicao')) return 'pendente_revisao';
   return cur;
 }
