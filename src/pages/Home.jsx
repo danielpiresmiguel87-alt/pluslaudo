@@ -200,7 +200,13 @@ export default function Home() {
             <div className="space-y-2">
               {pendentes.map(r => {
                 const ws = r.workflow_status || 'rascunho';
-                const label = ws === 'pendente_medicao' ? 'Aguardando Medição' : 'Aguardando Revisão';
+                const hasMeas = (r.measurements || []).length > 0;
+                const hasArt = !!r.art_documento_url;
+                let label;
+                if (ws === 'pendente_medicao') label = 'Aguardando Medição';
+                else if (ws === 'pendente_revisao' && r.status === 'aprovado' && !hasArt) label = 'Falta ART';
+                else if (ws === 'pendente_revisao' && hasMeas && !r.status) label = 'Aguardando Revisão';
+                else label = 'Aguardando Revisão';
                 return (
                   <div key={r.id} className="flex items-center justify-between bg-white rounded-lg border px-3 py-2 cursor-pointer hover:shadow-sm transition"
                     onClick={() => navigate(`/reports/${r.id}`)}>
@@ -217,7 +223,7 @@ export default function Home() {
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="text-amber-700 bg-amber-100">{label}</Badge>
+                      <Badge variant="secondary" className={label === 'Falta ART' ? 'text-red-700 bg-red-100' : 'text-amber-700 bg-amber-100'}>{label}</Badge>
                       <Button
                         variant="ghost"
                         size="icon"
