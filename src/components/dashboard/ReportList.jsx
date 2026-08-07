@@ -131,7 +131,6 @@ export default function ReportList({ reports, clients, onNavigate, onDeleted, us
                   </Badge>
                   <Badge
                     variant={r.status === 'aprovado' ? 'default' : r.status === 'reprovado' ? 'destructive' : 'secondary'}
-                    className={r.status === 'aprovado' ? 'bg-green-600 hover:bg-green-600' : ''}
                   >
                     {r.status === 'aprovado' ? 'Aprovado' : r.status === 'reprovado' ? 'Reprovado' : 'Rascunho'}
                   </Badge>
