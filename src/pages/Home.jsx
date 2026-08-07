@@ -11,6 +11,7 @@ import { Plus, AlertTriangle, CalendarClock, Trash2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import SummaryCards from '@/components/dashboard/SummaryCards';
 import ReportList from '@/components/dashboard/ReportList';
+import { computeWorkflowStatus } from '@/utils/workflow';
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -114,7 +115,7 @@ export default function Home() {
 
   const pendentes = useMemo(() => {
     return visibleReports.filter(r => {
-      const ws = r.workflow_status || 'rascunho';
+      const ws = computeWorkflowStatus(r);
       return ws === 'pendente_medicao' || ws === 'pendente_revisao';
     });
   }, [visibleReports]);
@@ -200,7 +201,7 @@ export default function Home() {
             </div>
             <div className="space-y-2">
               {pendentes.map(r => {
-                const ws = r.workflow_status || 'rascunho';
+                const ws = computeWorkflowStatus(r);
                 const hasMeas = (r.measurements || []).length > 0;
                 const hasArt = !!r.art_documento_url;
                 let label;
