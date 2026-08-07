@@ -32,6 +32,15 @@ const DEFAULT_RECOMMENDATIONS = "Considerando que o sistema de aterramento do eq
 
 const DEFAULT_NORMAS = "NR-10\nNR-12\nABNT NBR 5410\nABNT NBR 15749\nIN nº 19 (CBMSC)";
 
+// Avança o workflow_status conforme o estado real do laudo, evitando status travado.
+function computeWorkflowStatus(measurements, status, hasArt, currentWs, explicitWs) {
+  if (explicitWs) return explicitWs;
+  const cur = currentWs || 'rascunho';
+  if (measurements.length > 0 && status === 'aprovado' && hasArt) return 'concluido';
+  if (measurements.length > 0 && (cur === 'rascunho' || cur === 'pendente_medicao')) return 'pendente_revisao';
+  return cur;
+}
+
 export default function ReportForm() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -154,7 +163,8 @@ export default function ReportForm() {
       const status = updatedMeasurements.length === 0 ? 'rascunho' :
         updatedMeasurements.every(m => (m.valor_medido ?? Infinity) <= lim) ? 'aprovado' : 'reprovado';
       const validade = form.data ? new Date(new Date(form.data).getTime() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : undefined;
-      const payload = { ...form, condicoes_ambiente: formatEnvironmentConditions(form.condicoes_ambiente) || undefined, measurements: updatedMeasurements, status, validade, workflow_status: form.workflow_status || 'rascunho' };
+      const workflow_status = computeWorkflowStatus(updatedMeasurements, status, !!form.art_documento_url, form.workflow_status);
+      const payload = { ...form, condicoes_ambiente: formatEnvironmentConditions(form.condicoes_ambiente) || undefined, measurements: updatedMeasurements, status, validade, workflow_status };
       if (isNew) {
         const created = await base44.entities.Report.create(payload);
         limparRascunho(draftKey);
@@ -219,7 +229,7 @@ export default function ReportForm() {
         updatedMeasurements.every(m => (m.valor_medido ?? Infinity) <= lim) ? 'aprovado' : 'reprovado';
       const validade = form.data ? new Date(new Date(form.data).getTime() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : undefined;
       const condicoesStr = formatEnvironmentConditions(form.condicoes_ambiente);
-      const workflow_status = newWorkflowStatus || form.workflow_status || 'rascunho';
+      const workflow_status = computeWorkflowStatus(updatedMeasurements, status, !!form.art_documento_url, form.workflow_status, newWorkflowStatus);
       const payload = { ...form, condicoes_ambiente: condicoesStr || undefined, measurements: updatedMeasurements, status, validade, workflow_status };
       if (isNew) {
         const created = await base44.entities.Report.create(payload);
