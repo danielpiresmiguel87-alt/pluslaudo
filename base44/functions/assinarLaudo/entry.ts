@@ -17,6 +17,9 @@ Deno.serve(async (req) => {
 
     // Ação: salvar assinatura do engenheiro (NÃO invalida o link — cliente ainda pode assinar)
     if (action === 'sign_engineer') {
+      if (report.assinatura_engenheiro_url) {
+        return Response.json({ error: 'A assinatura do engenheiro já foi registrada e não pode ser alterada.', already_signed: true }, { status: 403 });
+      }
       if (!signature_data_url) return Response.json({ error: 'Assinatura obrigatória' }, { status: 400 });
 
       const base64 = signature_data_url.split(',')[1];
@@ -78,6 +81,9 @@ Deno.serve(async (req) => {
       if (report.assinatura_cliente_url) {
         return Response.json({ error: 'Este laudo já foi assinado pelo cliente. O link não está mais disponível.', already_signed: true }, { status: 403 });
       }
+      if (!report.assinatura_engenheiro_url) {
+        return Response.json({ error: 'O cliente só pode assinar após a assinatura do engenheiro responsável.', waiting_engineer: true }, { status: 403 });
+      }
       if (!signature_data_url) return Response.json({ error: 'Assinatura obrigatória' }, { status: 400 });
 
       const base64 = signature_data_url.split(',')[1];
@@ -138,6 +144,7 @@ Deno.serve(async (req) => {
         recomendacoes: report.recomendacoes,
         numero_art: report.numero_art,
         assinatura_engenheiro_url: report.assinatura_engenheiro_url,
+        assinatura_cliente_url: report.assinatura_cliente_url,
       },
       client: client ? {
         razao_social: client.razao_social,

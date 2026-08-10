@@ -225,6 +225,8 @@ export default function AssinaturaCliente() {
   const { report, client, company, engineer, electrician, instrument } = data;
   const lim = report.limite_ohms || 10;
   const measurements = report.measurements || [];
+  const engAlreadySigned = !!(report.assinatura_engenheiro_url || engSigned);
+  const cliAlreadySigned = !!(report.assinatura_cliente_url || signed);
   const hasMeas = measurements.length > 0;
   const allApproved = hasMeas && measurements.every(m => (m.valor_medido ?? Infinity) <= lim);
   const status = !hasMeas ? 'RASCUNHO' : allApproved ? 'APROVADO' : 'REPROVADO';
@@ -548,16 +550,21 @@ export default function AssinaturaCliente() {
           </div>
           <div className="rounded-lg p-3 text-sm mb-4" style={{ background: C.light, color: C.primary }}>
             <p className="font-medium mb-1">Atenção</p>
-            <p>Cada parte deve assinar no bloco correspondente. A assinatura do engenheiro não invalida o link. Após a assinatura do cliente, este link será invalidado e não poderá ser acessado novamente.</p>
+            <p>
+              O engenheiro responsável deve assinar primeiro. Só depois o bloco do cliente é liberado.
+              Cada assinatura, uma vez registrada, não pode ser alterada por ninguém. Após a assinatura do cliente, este link será invalidado.
+            </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             {/* Engenheiro */}
-            <div className="bg-white rounded-lg border p-4">
+            <div className={'bg-white rounded-lg border p-4' + (engAlreadySigned ? ' opacity-90' : '')}>
               <p className="text-sm font-bold mb-1" style={{ color: C.primary }}>Engenheiro Responsável</p>
               <p className="text-xs mb-3" style={{ color: C.gray }}>{engineer?.nome || '-'}{engineer?.crea_sc ? ` — CREA-SC: ${engineer.crea_sc}` : ''}</p>
-              {report.assinatura_engenheiro_url || engSigned ? (
-                <div className="flex items-center gap-2 text-green-700 text-sm py-8 justify-center">
-                  <CheckCircle className="h-5 w-5" /> Assinatura registrada
+              {engAlreadySigned ? (
+                <div className="flex flex-col items-center gap-2 text-green-700 text-sm py-8">
+                  <CheckCircle className="h-6 w-6" />
+                  <span className="font-medium">Assinatura registrada</span>
+                  <span className="text-xs" style={{ color: C.gray }}>Bloqueada — não pode ser alterada</span>
                 </div>
               ) : (
                 <>
@@ -572,19 +579,34 @@ export default function AssinaturaCliente() {
               )}
             </div>
             {/* Cliente */}
-            <div className="bg-white rounded-lg border p-4">
+            <div className={'bg-white rounded-lg border p-4' + (!engAlreadySigned || cliAlreadySigned ? ' opacity-60' : '')}>
               <p className="text-sm font-bold mb-1" style={{ color: C.primary }}>Cliente / Contratante</p>
               <p className="text-xs mb-3" style={{ color: C.gray }}>{client?.razao_social || '-'}{client?.cnpj ? ` — CNPJ: ${client.cnpj}` : ''}</p>
-              <div className="bg-white rounded-lg border p-2 mb-3">
-                <SignaturePad ref={sigRef} label="Assinatura do representante do cliente" />
-              </div>
-              <Button onClick={handleSign} disabled={signing} size="lg" className="w-full">
-                <CheckCircle className="h-4 w-4 mr-2" />
-                {signing ? 'Registrando...' : 'Confirmar Assinatura do Cliente'}
-              </Button>
-              <p className="text-xs text-center mt-2" style={{ color: C.gray }}>
-                Assinando como: <strong>{client?.razao_social || 'Cliente'}</strong>
-              </p>
+              {!engAlreadySigned ? (
+                <div className="flex flex-col items-center gap-2 text-amber-700 text-sm py-8 text-center">
+                  <AlertCircle className="h-6 w-6" />
+                  <span className="font-medium">Aguardando assinatura do engenheiro</span>
+                  <span className="text-xs" style={{ color: C.gray }}>O bloco do cliente será liberado após a assinatura do engenheiro</span>
+                </div>
+              ) : cliAlreadySigned ? (
+                <div className="flex flex-col items-center gap-2 text-green-700 text-sm py-8">
+                  <CheckCircle className="h-6 w-6" />
+                  <span className="font-medium">Assinatura registrada</span>
+                </div>
+              ) : (
+                <>
+                  <div className="bg-white rounded-lg border p-2 mb-3">
+                    <SignaturePad ref={sigRef} label="Assinatura do representante do cliente" />
+                  </div>
+                  <Button onClick={handleSign} disabled={signing} size="lg" className="w-full">
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    {signing ? 'Registrando...' : 'Confirmar Assinatura do Cliente'}
+                  </Button>
+                  <p className="text-xs text-center mt-2" style={{ color: C.gray }}>
+                    Assinando como: <strong>{client?.razao_social || 'Cliente'}</strong>
+                  </p>
+                </>
+              )}
             </div>
           </div>
         </div>
