@@ -7,6 +7,7 @@ import MeasurementEditor from '@/components/report/MeasurementEditor';
 import EnvironmentConditions from '@/components/report/EnvironmentConditions';
 import { formatEnvironmentConditions } from '@/utils/environment';
 import { CheckCircle, PenLine, AlertCircle, ShieldCheck, FileCheck, Save } from 'lucide-react';
+import { computeWorkflowStatus } from '@/utils/workflow';
 
 const C = {
   primary: '#1E3A5F',
@@ -162,7 +163,10 @@ export default function AssinaturaCliente() {
     );
   }
 
-  if (data?.report?.workflow_status === 'pendente_medicao' || data?.report?.workflow_status === 'pendente_revisao') {
+  // O editor de medições só aparece quando ainda NÃO há medições registradas.
+  // Assim que existem medições, o cliente vê o laudo completo + bloco de assinatura,
+  // mesmo que o workflow_status esteja travado em "pendente_revisao".
+  if (data?.report && (data.report.measurements || []).length === 0 && computeWorkflowStatus(data.report) === 'pendente_medicao') {
     const r = data.report;
     return (
       <div className="min-h-screen bg-slate-200 py-8 px-4">
