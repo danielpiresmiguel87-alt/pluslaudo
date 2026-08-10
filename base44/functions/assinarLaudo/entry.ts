@@ -15,8 +15,24 @@ Deno.serve(async (req) => {
 
     const report = reports[0];
 
-    if (report.assinatura_cliente_url) {
-      return Response.json({ error: 'Este laudo já foi assinado. O link não está mais disponível.', already_signed: true }, { status: 403 });
+    // Ação: salvar assinatura do engenheiro (NÃO invalida o link — cliente ainda pode assinar)
+    if (action === 'sign_engineer') {
+      if (!signature_data_url) return Response.json({ error: 'Assinatura obrigatória' }, { status: 400 });
+
+      const base64 = signature_data_url.split(',')[1];
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const blob = new Blob([bytes], { type: 'image/png' });
+      const file = new File([blob], 'assinatura-engenheiro.png', { type: 'image/png' });
+
+      const { file_url } = await base44.asServiceRole.integrations.Core.UploadFile({ file });
+
+      await base44.asServiceRole.entities.Report.update(report.id, {
+        assinatura_engenheiro_url: file_url,
+      });
+
+      return Response.json({ success: true });
     }
 
     // Ação: salvar medições (rascunho ou conclusão)
@@ -57,8 +73,11 @@ Deno.serve(async (req) => {
       return Response.json({ success: true });
     }
 
-    // Ação: salvar assinatura do cliente
+    // Ação: salvar assinatura do cliente (invalida o link)
     if (action === 'sign') {
+      if (report.assinatura_cliente_url) {
+        return Response.json({ error: 'Este laudo já foi assinado pelo cliente. O link não está mais disponível.', already_signed: true }, { status: 403 });
+      }
       if (!signature_data_url) return Response.json({ error: 'Assinatura obrigatória' }, { status: 400 });
 
       const base64 = signature_data_url.split(',')[1];

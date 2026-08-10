@@ -31,6 +31,9 @@ export default function AssinaturaCliente() {
   const [signing, setSigning] = useState(false);
   const [signed, setSigned] = useState(false);
   const sigRef = useRef(null);
+  const engSigRef = useRef(null);
+  const [signingEng, setSigningEng] = useState(false);
+  const [engSigned, setEngSigned] = useState(false);
   const [editableMeasurements, setEditableMeasurements] = useState([]);
   const [savingMeas, setSavingMeas] = useState(false);
   const [measSaved, setMeasSaved] = useState(false);
@@ -96,6 +99,23 @@ export default function AssinaturaCliente() {
       alert(msg);
     }
     setSavingMeas(false);
+  };
+
+  const handleSignEngineer = async () => {
+    const sigDataUrl = engSigRef.current?.toDataURL();
+    if (!sigDataUrl) {
+      alert('Desenhe a assinatura do engenheiro antes de confirmar.');
+      return;
+    }
+    setSigningEng(true);
+    try {
+      await base44.functions.invoke('assinarLaudo', { token, action: 'sign_engineer', signature_data_url: sigDataUrl });
+      setEngSigned(true);
+    } catch (e) {
+      const msg = e?.response?.data?.error || e?.data?.error || e.message || 'Erro ao salvar assinatura do engenheiro';
+      alert(msg);
+    }
+    setSigningEng(false);
   };
 
   const handleSign = async () => {
@@ -524,22 +544,49 @@ export default function AssinaturaCliente() {
         <div className="p-8 bg-slate-50 print:hidden">
           <div className="flex items-center gap-2 mb-3">
             <ShieldCheck className="h-5 w-5" style={{ color: C.accent }} />
-            <h3 className="font-bold" style={{ color: C.primary }}>Assinatura Digital do Cliente</h3>
+            <h3 className="font-bold" style={{ color: C.primary }}>Assinaturas Digitais</h3>
           </div>
           <div className="rounded-lg p-3 text-sm mb-4" style={{ background: C.light, color: C.primary }}>
             <p className="font-medium mb-1">Atenção</p>
-            <p>Ao assinar, você confirma que recebeu e revisou o laudo técnico acima na sua totalidade. Após confirmar, este link será invalidado e não poderá ser acessado novamente.</p>
+            <p>Cada parte deve assinar no bloco correspondente. A assinatura do engenheiro não invalida o link. Após a assinatura do cliente, este link será invalidado e não poderá ser acessado novamente.</p>
           </div>
-          <div className="bg-white rounded-lg border p-4 mb-4">
-            <SignaturePad ref={sigRef} label="Assinatura do representante do cliente" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            {/* Engenheiro */}
+            <div className="bg-white rounded-lg border p-4">
+              <p className="text-sm font-bold mb-1" style={{ color: C.primary }}>Engenheiro Responsável</p>
+              <p className="text-xs mb-3" style={{ color: C.gray }}>{engineer?.nome || '-'}{engineer?.crea_sc ? ` — CREA-SC: ${engineer.crea_sc}` : ''}</p>
+              {report.assinatura_engenheiro_url || engSigned ? (
+                <div className="flex items-center gap-2 text-green-700 text-sm py-8 justify-center">
+                  <CheckCircle className="h-5 w-5" /> Assinatura registrada
+                </div>
+              ) : (
+                <>
+                  <div className="bg-white rounded-lg border p-2 mb-3">
+                    <SignaturePad ref={engSigRef} label="Assinatura do engenheiro" />
+                  </div>
+                  <Button onClick={handleSignEngineer} disabled={signingEng} variant="outline" className="w-full">
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    {signingEng ? 'Registrando...' : 'Confirmar Assinatura do Engenheiro'}
+                  </Button>
+                </>
+              )}
+            </div>
+            {/* Cliente */}
+            <div className="bg-white rounded-lg border p-4">
+              <p className="text-sm font-bold mb-1" style={{ color: C.primary }}>Cliente / Contratante</p>
+              <p className="text-xs mb-3" style={{ color: C.gray }}>{client?.razao_social || '-'}{client?.cnpj ? ` — CNPJ: ${client.cnpj}` : ''}</p>
+              <div className="bg-white rounded-lg border p-2 mb-3">
+                <SignaturePad ref={sigRef} label="Assinatura do representante do cliente" />
+              </div>
+              <Button onClick={handleSign} disabled={signing} size="lg" className="w-full">
+                <CheckCircle className="h-4 w-4 mr-2" />
+                {signing ? 'Registrando...' : 'Confirmar Assinatura do Cliente'}
+              </Button>
+              <p className="text-xs text-center mt-2" style={{ color: C.gray }}>
+                Assinando como: <strong>{client?.razao_social || 'Cliente'}</strong>
+              </p>
+            </div>
           </div>
-          <Button onClick={handleSign} disabled={signing} size="lg" className="w-full">
-            <CheckCircle className="h-4 w-4 mr-2" />
-            {signing ? 'Registrando...' : 'Confirmar Assinatura'}
-          </Button>
-          <p className="text-xs text-center mt-3" style={{ color: C.gray }}>
-            Assinando como: <strong>{client?.razao_social || 'Cliente'}</strong> — CNPJ: {client?.cnpj || '-'}
-          </p>
         </div>
       </div>
     </div>
