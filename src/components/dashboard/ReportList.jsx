@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
-import { FileText, Clock, CheckCircle, ClipboardList, AlertTriangle, CalendarClock, Copy, Check, Loader2, Trash2 } from 'lucide-react';
+import { FileText, Clock, CheckCircle, ClipboardList, AlertTriangle, CalendarClock, Loader2, Trash2 } from 'lucide-react';
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -40,10 +40,7 @@ export default function ReportList({ reports, clients, onNavigate, onDeleted, us
     return m;
   }, [clients]);
 
-  const [copiedId, setCopiedId] = useState(null);
-  const [loadingId, setLoadingId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
-  const canCopyLink = userRole === 'admin' || userRole === 'coordenador' || userRole === 'engenheiro';
   const canDelete = userRole === 'admin' || userRole === 'coordenador';
 
   const handleDelete = async (e, reportId) => {
@@ -57,27 +54,6 @@ export default function ReportList({ reports, clients, onNavigate, onDeleted, us
       alert('Erro ao excluir laudo: ' + (err?.message || ''));
     }
     setDeletingId(null);
-  };
-
-  const handleCopyLink = async (e, reportId) => {
-    e.stopPropagation();
-    setLoadingId(reportId);
-    try {
-      const res = await base44.functions.invoke('enviarAssinatura', {
-        report_id: reportId,
-        app_url: window.location.origin,
-        reopen: false,
-      });
-      const url = res.data?.signing_url;
-      if (url) {
-        await navigator.clipboard.writeText(url);
-        setCopiedId(reportId);
-        setTimeout(() => setCopiedId(null), 2000);
-      }
-    } catch (err) {
-      alert('Erro ao gerar link: ' + (err?.response?.data?.error || err?.data?.error || err.message));
-    }
-    setLoadingId(null);
   };
 
   if (reports.length === 0) {
@@ -134,25 +110,6 @@ export default function ReportList({ reports, clients, onNavigate, onDeleted, us
                   >
                     {r.status === 'aprovado' ? 'Aprovado' : r.status === 'reprovado' ? 'Reprovado' : 'Rascunho'}
                   </Badge>
-                  {canCopyLink && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-7 text-xs px-2"
-                      onClick={(e) => handleCopyLink(e, r.id)}
-                      disabled={loadingId === r.id}
-                    >
-                      {loadingId === r.id ? (
-                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                      ) : copiedId === r.id ? (
-                        <Check className="h-3 w-3 mr-1 text-green-600" />
-                      ) : (
-                        <Copy className="h-3 w-3 mr-1" />
-                      )}
-                      {copiedId === r.id ? 'Copiado!' : 'Copiar Link'}
-                    </Button>
-                  )}
                   {canDelete && (
                     <Button
                       type="button"

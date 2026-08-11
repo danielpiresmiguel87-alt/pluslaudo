@@ -15,7 +15,6 @@ import Clients from '@/pages/Clients';
 import Instruments from '@/pages/Instruments';
 import UsersPage from '@/pages/Users';
 import Settings from '@/pages/Settings';
-import AssinaturaCliente from '@/pages/AssinaturaCliente';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
@@ -28,15 +27,6 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, navigateToLogin } = useAuth();
   const location = useLocation();
-
-  // Páginas públicas — não requerem login
-  if (location.pathname.startsWith('/assinatura/')) {
-    return (
-      <Routes>
-        <Route path="/assinatura/:token" element={<AssinaturaCliente />} />
-      </Routes>
-    );
-  }
 
   if (location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/forgot-password' || location.pathname.startsWith('/reset-password')) {
     return (
