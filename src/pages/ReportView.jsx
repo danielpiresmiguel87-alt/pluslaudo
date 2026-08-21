@@ -23,6 +23,24 @@ export default function ReportView() {
   const [savingArt, setSavingArt] = useState(false);
   const [uploadingArt, setUploadingArt] = useState(false);
   const [extractingArt, setExtractingArt] = useState(false);
+
+  const extractArtNumero = async (fileUrl) => {
+    if (!fileUrl) return;
+    setExtractingArt(true);
+    try {
+      const res = await base44.integrations.Core.InvokeLLM({
+        prompt: "Analise este documento de ART (Anotação de Responsabilidade Técnica) do CREA e extraia o número da ART. O número geralmente aparece próximo a campos como 'Número da ART', 'ART', 'Nº' ou 'ou serviço', e costuma ter formato numérico com hífen (ex: 10647381-0). Pode haver prefixos como ano (ex: '25 2026 10647381-0') — retorne apenas o número principal com o hífen, sem o ano. Retorne apenas o número encontrado, sem texto adicional.",
+        file_urls: [fileUrl],
+        response_json_schema: { type: "object", properties: { numero_art: { type: "string" } } },
+      });
+      const numero = (res?.numero_art || '').trim();
+      if (numero) setArtNumero(numero);
+      else alert('Não foi possível identificar o número da ART no documento. Preencha manualmente.');
+    } catch (e) {
+      alert('Falha ao ler o documento: ' + e.message);
+    }
+    setExtractingArt(false);
+  };
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState(null);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [loadError, setLoadError] = useState(null);
@@ -166,20 +184,7 @@ export default function ReportView() {
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       setArtDocUrl(file_url);
-      // Tenta ler o número da ART do documento automaticamente (PDF ou imagem)
-      setExtractingArt(true);
-      try {
-        const res = await base44.integrations.Core.InvokeLLM({
-          prompt: "Analise este documento de ART (Anotação de Responsabilidade Técnica) do CREA e extraia o número da ART. O número geralmente aparece próximo a campos como 'Número da ART', 'ART', 'Nº' ou 'ou serviço', e costuma ter formato numérico com hífen (ex: 10647381-0). Pode haver prefixos como ano (ex: '25 2026 10647381-0') — retorne apenas o número principal com o hífen, sem o ano. Retorne apenas o número encontrado, sem texto adicional.",
-          file_urls: [file_url],
-          response_json_schema: { type: "object", properties: { numero_art: { type: "string" } } },
-        });
-        const numero = (res?.numero_art || '').trim();
-        if (numero) setArtNumero(numero);
-      } catch (e) {
-        // Extração falhou — usuário digita manualmente; o upload já foi concluído
-      }
-      setExtractingArt(false);
+      await extractArtNumero(file_url);
     } catch (e) {
       alert('Erro ao enviar documento: ' + e.message);
     }
@@ -324,7 +329,15 @@ export default function ReportView() {
             <div className="space-y-3 mt-2">
               <div>
                 <span className="text-xs text-muted-foreground">Número da ART</span>
-                <Input value={artNumero} onChange={e => setArtNumero(e.target.value)} placeholder="Ex: 2024/123456" />
+                <div className="flex gap-2">
+                  <Input value={artNumero} onChange={e => setArtNumero(e.target.value)} placeholder="Ex: 10647381-0" className="flex-1" />
+                  {artDocUrl && (
+                    <Button type="button" variant="outline" size="sm" disabled={extractingArt} onClick={() => extractArtNumero(artDocUrl)}>
+                      {extractingArt ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+                      <span className="ml-1 hidden sm:inline">{extractingArt ? 'Lendo...' : 'Ler do documento'}</span>
+                    </Button>
+                  )}
+                </div>
               </div>
               <div>
                 <span className="text-xs text-muted-foreground">Documento da ART (PDF)</span>
