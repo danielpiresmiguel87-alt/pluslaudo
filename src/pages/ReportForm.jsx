@@ -77,6 +77,7 @@ export default function ReportForm() {
   const { user: currentUser } = useAuth();
   const [draftSaved, setDraftSaved] = useState(false);
   const [uploadingArt, setUploadingArt] = useState(false);
+  const [extractingArt, setExtractingArt] = useState(false);
 
   const handleClientCnpjLookup = async () => {
     const cnpj = (clientForm.cnpj || '').replace(/\D/g, '');
@@ -151,6 +152,20 @@ export default function ReportForm() {
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       set('art_documento_url', file_url);
+      // Tenta ler o número da ART do PDF automaticamente
+      setExtractingArt(true);
+      try {
+        const res = await base44.integrations.Core.InvokeLLM({
+          prompt: "Analise este documento PDF de ART (Anotação de Responsabilidade Técnica) e extraia o número da ART. O número da ART geralmente aparece próximo a campos como 'Número da ART', 'ART', 'Nº' ou 'ou serviço', e costuma ter formato numérico com hífen (ex: 10647381-0). Retorne apenas o número encontrado, sem texto adicional.",
+          file_urls: [file_url],
+          response_json_schema: { type: "object", properties: { numero_art: { type: "string" } } },
+        });
+        const numero = (res?.numero_art || '').trim();
+        if (numero) set('numero_art', numero);
+      } catch (e) {
+        // Extração falhou — usuário digita manualmente; o upload já foi concluído
+      }
+      setExtractingArt(false);
     } catch (err) { alert('Erro ao enviar ART: ' + err.message); }
     setUploadingArt(false);
   };
@@ -402,6 +417,8 @@ export default function ReportForm() {
                 <div className="flex items-center justify-center gap-2 border-2 border-dashed border-input rounded-md h-20 hover:bg-accent/50 transition-colors">
                   {uploadingArt ? (
                     <><Loader2 className="h-4 w-4 animate-spin" /> <span className="text-sm text-muted-foreground">Enviando...</span></>
+                  ) : extractingArt ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> <span className="text-sm text-muted-foreground">Lendo número da ART...</span></>
                   ) : (
                     <><Upload className="h-4 w-4 text-muted-foreground" /> <span className="text-sm text-muted-foreground">Clique para anexar o PDF da ART</span></>
                   )}
