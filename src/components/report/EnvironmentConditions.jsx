@@ -119,9 +119,9 @@ function parseConditions(value) {
   // Formato legado: "Período: X | Tempo: Y | Temperatura: Z°C | Umidade: W%"
   const out = {};
   value.split('|').forEach(part => {
-    const m = part.match(/^\s*(Período|Tempo|Temperatura|Umidade)\s*:\s*(.+?)\s*$/i);
+    const m = part.match(/^\s*(Per[ií]odo|Tempo|Temperatura|Umidade)\s*:\s*(.+?)\s*$/i);
     if (!m) return;
-    const key = m[1].toLowerCase();
+    const key = m[1].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     const raw = m[2];
     if (key === 'periodo') out.periodo = raw;
     else if (key === 'tempo') out.tempo = raw;

@@ -93,7 +93,9 @@ export default function ReportForm() {
   const draftKey = isNew ? 'report_draft' : `report_draft_${id}`;
 
   useEffect(() => {
-    const draft = carregarRascunho(draftKey);
+    // Rascunho local só vale para laudo novo; em laudo existente o servidor é a fonte de verdade
+    // (um rascunho obsoleto não pode apagar dados já salvos, ex.: condições climáticas)
+    const draft = isNew ? carregarRascunho(draftKey) : null;
     if (draft) {
       setForm({
         objetivo: DEFAULT_OBJECTIVE, metodologia: DEFAULT_METHODOLOGY,
@@ -111,7 +113,9 @@ export default function ReportForm() {
     base44.entities.User.list()
       .then(setUsers)
       .catch(() => setUsers([]));
-    if (!isNew && !draft) {
+    if (!isNew) {
+      // Sempre busca do servidor; descarta rascunho local obsoleto do laudo existente
+      limparRascunho(draftKey);
       base44.entities.Report.get(id).then(r => {
         setForm({
           objetivo: DEFAULT_OBJECTIVE, metodologia: DEFAULT_METHODOLOGY,
