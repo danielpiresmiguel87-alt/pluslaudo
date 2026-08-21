@@ -9,7 +9,7 @@ import { Loader2, Cloud, RefreshCw } from 'lucide-react';
 const DEFAULTS = { periodo: '', tempo: '', temperatura: '', umidade: '' };
 
 export default function EnvironmentConditions({ value, onChange, location, autoFetch = true }) {
-  const v = { ...DEFAULTS, ...(typeof value === 'string' ? safeParse(value) : value) };
+  const v = { ...DEFAULTS, ...parseConditions(value) };
   const [fetching, setFetching] = useState(false);
   const [lastFetched, setLastFetched] = useState('');
   const fetchedRef = useRef(false);
@@ -107,6 +107,26 @@ export default function EnvironmentConditions({ value, onChange, location, autoF
   );
 }
 
-function safeParse(str) {
-  try { const p = JSON.parse(str); return typeof p === 'object' ? p : {}; } catch { return {}; }
+function parseConditions(value) {
+  if (!value) return {};
+  if (typeof value === 'object') return value;
+  if (typeof value !== 'string') return {};
+  // Formato novo: JSON
+  try {
+    const p = JSON.parse(value);
+    if (typeof p === 'object' && p !== null) return p;
+  } catch { /* formato legado — cai abaixo */ }
+  // Formato legado: "Período: X | Tempo: Y | Temperatura: Z°C | Umidade: W%"
+  const out = {};
+  value.split('|').forEach(part => {
+    const m = part.match(/^\s*(Período|Tempo|Temperatura|Umidade)\s*:\s*(.+?)\s*$/i);
+    if (!m) return;
+    const key = m[1].toLowerCase();
+    const raw = m[2];
+    if (key === 'periodo') out.periodo = raw;
+    else if (key === 'tempo') out.tempo = raw;
+    else if (key === 'temperatura') out.temperatura = raw.replace(/[°c\s]/gi, '');
+    else if (key === 'umidade') out.umidade = raw.replace(/[%\s]/g, '');
+  });
+  return out;
 }
