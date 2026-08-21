@@ -21,8 +21,15 @@ import {
   uploadFotosEmLote,
   useBloquearSaida,
 } from '@/lib/offline';
-import { formatEnvironmentConditions } from '@/utils/environment';
 import { INSPECTION_ITEMS, getDefaultInspectionStatus } from '@/utils/inspectionItems';
+
+// Serializa as condições climáticas como JSON para que os dados voltem ao reeditar o laudo.
+// O PDF aplica a formatação amigável (formatEnvironmentConditions) no momento da geração.
+const serializeCondicoes = (val) => {
+  if (!val) return undefined;
+  if (typeof val === 'object') return JSON.stringify(val);
+  return val || undefined;
+};
 
 const DEFAULT_OBJECTIVE = "O presente laudo técnico tem por objetivo avaliar as condições físicas e atestar a conformidade do sistema de aterramento de equipamentos, juntamente com o sistema de aterramento elétrico principal da instalação da empresa.\n\nAs inspeções e ensaios instrumentais realizados visam comprovar a eficácia da continuidade elétrica e da equipotencialização das massas, em estrito atendimento às exigências legais do Ministério do Trabalho e normativas técnicas vigentes, com destaque para a NR-10, ABNT NBR 5410, ABNT NBR 15749 e a Instrução Normativa nº 19 (IN 19) do Corpo de Bombeiros Militar de Santa Catarina (CBMSC).";
 
@@ -159,7 +166,7 @@ export default function ReportForm() {
         updatedMeasurements.every(m => (m.valor_medido ?? Infinity) <= lim) ? 'aprovado' : 'reprovado';
       const validade = form.data ? new Date(new Date(form.data).getTime() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : undefined;
       const workflow_status = computeWorkflowStatus(updatedMeasurements, status, !!form.art_documento_url, form.workflow_status);
-      const payload = { ...form, condicoes_ambiente: formatEnvironmentConditions(form.condicoes_ambiente) || undefined, measurements: updatedMeasurements, status, validade, workflow_status };
+      const payload = { ...form, condicoes_ambiente: serializeCondicoes(form.condicoes_ambiente), measurements: updatedMeasurements, status, validade, workflow_status };
       if (isNew) {
         const created = await base44.entities.Report.create(payload);
         limparRascunho(draftKey);
@@ -223,9 +230,9 @@ export default function ReportForm() {
       const status = updatedMeasurements.length === 0 ? 'rascunho' :
         updatedMeasurements.every(m => (m.valor_medido ?? Infinity) <= lim) ? 'aprovado' : 'reprovado';
       const validade = form.data ? new Date(new Date(form.data).getTime() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : undefined;
-      const condicoesStr = formatEnvironmentConditions(form.condicoes_ambiente);
+      const condicoesStr = serializeCondicoes(form.condicoes_ambiente);
       const workflow_status = computeWorkflowStatus(updatedMeasurements, status, !!form.art_documento_url, form.workflow_status, newWorkflowStatus);
-      const payload = { ...form, condicoes_ambiente: condicoesStr || undefined, measurements: updatedMeasurements, status, validade, workflow_status };
+      const payload = { ...form, condicoes_ambiente: condicoesStr, measurements: updatedMeasurements, status, validade, workflow_status };
       if (isNew) {
         const created = await base44.entities.Report.create(payload);
         limparRascunho(draftKey);
