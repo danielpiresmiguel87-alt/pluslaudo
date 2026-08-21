@@ -173,9 +173,12 @@ export default function ReportView() {
   };
 
   const startArtEdit = () => {
+    const docUrl = report.art_documento_url || '';
     setArtNumero(report.numero_art || '');
-    setArtDocUrl(report.art_documento_url || '');
+    setArtDocUrl(docUrl);
     setArtEditing(true);
+    // Se já há documento anexado mas o número está vazio, lê automaticamente
+    if (docUrl && !report.numero_art) extractArtNumero(docUrl);
   };
 
   const handleArtUpload = async (file) => {
