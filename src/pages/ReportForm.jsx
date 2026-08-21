@@ -127,15 +127,15 @@ export default function ReportForm() {
     }
   }, [id, draftKey]);
 
-  // Auto-save rascunho
+  // Auto-save rascunho (somente laudos novos; laudos existentes usam o servidor como fonte de verdade)
   useEffect(() => {
-    if (!loading) {
+    if (!loading && isNew) {
       salvarRascunho(draftKey, form);
       setDraftSaved(true);
       const t = setTimeout(() => setDraftSaved(false), 2000);
       return () => clearTimeout(t);
     }
-  }, [form, draftKey, loading]);
+  }, [form, draftKey, loading, isNew]);
 
   // Bloqueia saída acidental quando há dados
   useBloquearSaida(!saving && (!!form.equipamento || !!form.cliente_id || (form.measurements?.length > 0)));
