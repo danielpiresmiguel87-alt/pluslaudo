@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Pencil, Download, Printer, CheckCircle, Upload, FileText, Save } from 'lucide-react';
+import { ArrowLeft, Pencil, Download, Printer, CheckCircle, Upload, FileText, Save, Loader2 } from 'lucide-react';
 import { generateReportPDF } from '@/utils/reportPdf';
 import PdfViewer from '@/components/report/PdfViewer';
 import { formatEnvironmentConditions } from '@/utils/environment';
@@ -22,6 +22,7 @@ export default function ReportView() {
   const [artDocUrl, setArtDocUrl] = useState('');
   const [savingArt, setSavingArt] = useState(false);
   const [uploadingArt, setUploadingArt] = useState(false);
+  const [extractingArt, setExtractingArt] = useState(false);
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState(null);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [loadError, setLoadError] = useState(null);
@@ -165,6 +166,20 @@ export default function ReportView() {
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       setArtDocUrl(file_url);
+      // Tenta ler o número da ART do documento automaticamente (PDF ou imagem)
+      setExtractingArt(true);
+      try {
+        const res = await base44.integrations.Core.InvokeLLM({
+          prompt: "Analise este documento de ART (Anotação de Responsabilidade Técnica) do CREA e extraia o número da ART. O número geralmente aparece próximo a campos como 'Número da ART', 'ART', 'Nº' ou 'ou serviço', e costuma ter formato numérico com hífen (ex: 10647381-0). Pode haver prefixos como ano (ex: '25 2026 10647381-0') — retorne apenas o número principal com o hífen, sem o ano. Retorne apenas o número encontrado, sem texto adicional.",
+          file_urls: [file_url],
+          response_json_schema: { type: "object", properties: { numero_art: { type: "string" } } },
+        });
+        const numero = (res?.numero_art || '').trim();
+        if (numero) setArtNumero(numero);
+      } catch (e) {
+        // Extração falhou — usuário digita manualmente; o upload já foi concluído
+      }
+      setExtractingArt(false);
     } catch (e) {
       alert('Erro ao enviar documento: ' + e.message);
     }
@@ -320,8 +335,9 @@ export default function ReportView() {
                     <Button variant="ghost" size="sm" onClick={() => setArtDocUrl('')}>Remover</Button>
                   </div>
                 ) : (
-                  <Button variant="outline" size="sm" disabled={uploadingArt} onClick={() => document.getElementById('art-upload').click()}>
-                    <Upload className="h-4 w-4 mr-1" /> {uploadingArt ? 'Enviando...' : 'Anexar ART'}
+                  <Button variant="outline" size="sm" disabled={uploadingArt || extractingArt} onClick={() => document.getElementById('art-upload').click()}>
+                    {uploadingArt || extractingArt ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Upload className="h-4 w-4 mr-1" />}
+                    {uploadingArt ? 'Enviando...' : extractingArt ? 'Lendo número da ART...' : 'Anexar ART'}
                   </Button>
                 )}
                 <input id="art-upload" type="file" accept="application/pdf,image/*" className="hidden"

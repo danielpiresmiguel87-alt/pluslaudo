@@ -156,7 +156,7 @@ export default function ReportForm() {
       setExtractingArt(true);
       try {
         const res = await base44.integrations.Core.InvokeLLM({
-          prompt: "Analise este documento PDF de ART (Anotação de Responsabilidade Técnica) e extraia o número da ART. O número da ART geralmente aparece próximo a campos como 'Número da ART', 'ART', 'Nº' ou 'ou serviço', e costuma ter formato numérico com hífen (ex: 10647381-0). Retorne apenas o número encontrado, sem texto adicional.",
+          prompt: "Analise este documento de ART (Anotação de Responsabilidade Técnica) do CREA e extraia o número da ART. O número geralmente aparece próximo a campos como 'Número da ART', 'ART', 'Nº' ou 'ou serviço', e costuma ter formato numérico com hífen (ex: 10647381-0). Pode haver prefixos como ano (ex: '25 2026 10647381-0') — retorne apenas o número principal com o hífen, sem o ano. Retorne apenas o número encontrado, sem texto adicional.",
           file_urls: [file_url],
           response_json_schema: { type: "object", properties: { numero_art: { type: "string" } } },
         });
