@@ -22,6 +22,7 @@ import {
   useBloquearSaida,
 } from '@/lib/offline';
 import { INSPECTION_ITEMS, getDefaultInspectionStatus } from '@/utils/inspectionItems';
+import { computeWorkflowStatus } from '@/utils/workflow';
 
 // Serializa as condições climáticas como JSON para que os dados voltem ao reeditar o laudo.
 // O PDF aplica a formatação amigável (formatEnvironmentConditions) no momento da geração.
@@ -38,15 +39,6 @@ const DEFAULT_METHODOLOGY = "A metodologia utilizada no presente laudo baseia-se
 const DEFAULT_RECOMMENDATIONS = "Considerando que o sistema de aterramento do equipamento inspecionado encontra-se em conformidade, recomenda-se à contratante a manutenção rigorosa das rotinas de inspeção visual/manutenção. É crucial garantir que as conexões mecânicas e os condutores de proteção (PE) não sofram desgastes, afrouxamentos ou oxidações decorrentes da dinâmica da operação industrial, prevenindo assim o risco de choque elétrico aos colaboradores.\n\nPara a manutenção desta conformidade e em estrito atendimento às diretrizes da NR-10 e da NR-12, uma nova bateria de ensaios instrumentais deverá ser programada anualmente. Ensaios e inspeções adicionais deverão ser realizados, obrigatoriamente, sempre que houver intervenções elétricas, reformas estruturais, substituição ou remanejamento físico do equipamento, bem como perante a identificação de qualquer anomalia no funcionamento do sistema.\n\nRessalta-se que a contratante deve manter os registros atualizados de todas as medições e rotinas de manutenção, preferencialmente integrados ao Prontuário de Instalações Elétricas (PIE) e ao manual/registro de manutenção da máquina. Por fim, conforme exigência legal, todas as intervenções futuras no sistema de aterramento deverão ser executadas exclusivamente por Profissional Legalmente Habilitado, com a respectiva emissão da Anotação de Responsabilidade Técnica (ART).";
 
 const DEFAULT_NORMAS = "NR-10\nNR-12\nABNT NBR 5410\nABNT NBR 15749\nIN nº 19 (CBMSC)";
-
-// Avança o workflow_status conforme o estado real do laudo, evitando status travado.
-function computeWorkflowStatus(measurements, status, hasArt, currentWs, explicitWs) {
-  if (explicitWs) return explicitWs;
-  const cur = currentWs || 'rascunho';
-  if (measurements.length > 0 && status === 'aprovado' && hasArt) return 'concluido';
-  if (measurements.length > 0 && (cur === 'rascunho' || cur === 'pendente_medicao')) return 'pendente_revisao';
-  return cur;
-}
 
 export default function ReportForm() {
   const { id } = useParams();
@@ -184,7 +176,7 @@ export default function ReportForm() {
       const status = updatedMeasurements.length === 0 ? 'rascunho' :
         updatedMeasurements.every(m => (m.valor_medido ?? Infinity) <= lim) ? 'aprovado' : 'reprovado';
       const validade = form.data ? new Date(new Date(form.data).getTime() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : undefined;
-      const workflow_status = computeWorkflowStatus(updatedMeasurements, status, !!form.art_documento_url, form.workflow_status);
+      const workflow_status = computeWorkflowStatus({ measurements: updatedMeasurements, status, art_documento_url: form.art_documento_url }, form.workflow_status);
       const payload = { ...form, condicoes_ambiente: serializeCondicoes(form.condicoes_ambiente), measurements: updatedMeasurements, status, validade, workflow_status };
       if (isNew) {
         const created = await base44.entities.Report.create(payload);
@@ -250,7 +242,7 @@ export default function ReportForm() {
         updatedMeasurements.every(m => (m.valor_medido ?? Infinity) <= lim) ? 'aprovado' : 'reprovado';
       const validade = form.data ? new Date(new Date(form.data).getTime() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : undefined;
       const condicoesStr = serializeCondicoes(form.condicoes_ambiente);
-      const workflow_status = computeWorkflowStatus(updatedMeasurements, status, !!form.art_documento_url, form.workflow_status, newWorkflowStatus);
+      const workflow_status = computeWorkflowStatus({ measurements: updatedMeasurements, status, art_documento_url: form.art_documento_url }, form.workflow_status, newWorkflowStatus);
       const payload = { ...form, condicoes_ambiente: condicoesStr, measurements: updatedMeasurements, status, validade, workflow_status };
       if (isNew) {
         const created = await base44.entities.Report.create(payload);
