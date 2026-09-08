@@ -7,6 +7,10 @@ export function computeWorkflowStatus(report, currentWs, explicitWs) {
   const hasArt = !!report.art_documento_url;
   const cur = currentWs || report.workflow_status || 'rascunho';
   if (measurements.length > 0 && status === 'aprovado' && hasArt) return 'concluido';
+  // "Concluído" exige ART, medições e aprovação; sem algum deles, volta para revisão
+  if (cur === 'concluido' && (!hasArt || measurements.length === 0 || status !== 'aprovado')) {
+    return measurements.length > 0 ? 'pendente_revisao' : 'rascunho';
+  }
   if (measurements.length > 0 && (cur === 'rascunho' || cur === 'pendente_medicao')) return 'pendente_revisao';
   return cur;
 }
