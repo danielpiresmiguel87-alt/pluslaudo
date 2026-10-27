@@ -44,34 +44,13 @@ export default function ReportList({ reports, clients, onNavigate, onDeleted, on
   const [duplicatingId, setDuplicatingId] = useState(null);
   const canDelete = userRole === 'admin' || userRole === 'coordenador';
 
-  // Cria um novo laudo em rascunho a partir de um existente:
-  // copia dados de identificação e textos técnicos, mas não medições, fotos, ART nem assinaturas
+  // Cria um novo laudo copiando 100% das informações do original, incluindo medições e fotos
   const handleDuplicate = async (e, report) => {
     e.stopPropagation();
     setDuplicatingId(report.id);
     try {
-      const hoje = new Date().toISOString().split('T')[0];
-      const copia = await base44.entities.Report.create({
-        equipamento: report.equipamento,
-        tag_equipamento: report.tag_equipamento,
-        local: report.local,
-        cliente_id: report.cliente_id,
-        engenheiro_id: report.engenheiro_id,
-        eletricista_id: report.eletricista_id,
-        instrumento_id: report.instrumento_id,
-        mostrar_data_calibracao: report.mostrar_data_calibracao,
-        normas: report.normas,
-        objetivo: report.objetivo,
-        metodologia: report.metodologia,
-        limitacoes: report.limitacoes,
-        recomendacoes: report.recomendacoes,
-        limite_ohms: report.limite_ohms,
-        itens_verificados: report.itens_verificados,
-        data: hoje,
-        status: 'rascunho',
-        workflow_status: 'rascunho',
-        measurements: [],
-      });
+      const { id, created_date, updated_date, created_by_id, ...dados } = report;
+      const copia = await base44.entities.Report.create(dados);
       if (onDuplicated) onDuplicated(copia.id);
     } catch (err) {
       alert('Erro ao duplicar laudo: ' + (err?.message || ''));
