@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
-import { FileText, Clock, CheckCircle, ClipboardList, AlertTriangle, CalendarClock, Loader2, Trash2 } from 'lucide-react';
+import { FileText, Clock, CheckCircle, ClipboardList, AlertTriangle, CalendarClock, Loader2, Trash2, Copy } from 'lucide-react';
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -33,7 +33,7 @@ function getValidadeInfo(r) {
   return null;
 }
 
-export default function ReportList({ reports, clients, onNavigate, onDeleted, userRole }) {
+export default function ReportList({ reports, clients, onNavigate, onDeleted, onDuplicated, userRole }) {
   const clientMap = React.useMemo(() => {
     const m = {};
     clients.forEach(c => { m[c.id] = c; });
@@ -41,7 +41,43 @@ export default function ReportList({ reports, clients, onNavigate, onDeleted, us
   }, [clients]);
 
   const [deletingId, setDeletingId] = useState(null);
+  const [duplicatingId, setDuplicatingId] = useState(null);
   const canDelete = userRole === 'admin' || userRole === 'coordenador';
+
+  // Cria um novo laudo em rascunho a partir de um existente:
+  // copia dados de identificação e textos técnicos, mas não medições, fotos, ART nem assinaturas
+  const handleDuplicate = async (e, report) => {
+    e.stopPropagation();
+    setDuplicatingId(report.id);
+    try {
+      const hoje = new Date().toISOString().split('T')[0];
+      const copia = await base44.entities.Report.create({
+        equipamento: report.equipamento,
+        tag_equipamento: report.tag_equipamento,
+        local: report.local,
+        cliente_id: report.cliente_id,
+        engenheiro_id: report.engenheiro_id,
+        eletricista_id: report.eletricista_id,
+        instrumento_id: report.instrumento_id,
+        mostrar_data_calibracao: report.mostrar_data_calibracao,
+        normas: report.normas,
+        objetivo: report.objetivo,
+        metodologia: report.metodologia,
+        limitacoes: report.limitacoes,
+        recomendacoes: report.recomendacoes,
+        limite_ohms: report.limite_ohms,
+        itens_verificados: report.itens_verificados,
+        data: hoje,
+        status: 'rascunho',
+        workflow_status: 'rascunho',
+        measurements: [],
+      });
+      if (onDuplicated) onDuplicated(copia.id);
+    } catch (err) {
+      alert('Erro ao duplicar laudo: ' + (err?.message || ''));
+    }
+    setDuplicatingId(null);
+  };
 
   const handleDelete = async (e, reportId) => {
     e.stopPropagation();
@@ -110,6 +146,24 @@ export default function ReportList({ reports, clients, onNavigate, onDeleted, us
                   >
                     {r.status === 'aprovado' ? 'Aprovado' : r.status === 'reprovado' ? 'Reprovado' : 'Rascunho'}
                   </Badge>
+                  {canDelete && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs px-2"
+                      onClick={(e) => handleDuplicate(e, r)}
+                      disabled={duplicatingId === r.id}
+                      title="Criar um novo laudo a partir deste"
+                    >
+                      {duplicatingId === r.id ? (
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      ) : (
+                        <Copy className="h-3 w-3 mr-1" />
+                      )}
+                      Duplicar
+                    </Button>
+                  )}
                   {canDelete && (
                     <Button
                       type="button"

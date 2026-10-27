@@ -298,7 +298,7 @@ export default function Home() {
           </CardContent>
         </Card>
 
-        <ReportList reports={filteredReports} clients={clients} userRole={userRole} onNavigate={(id) => navigate(`/reports/${id}`)} onDeleted={(id) => setReports(prev => prev.filter(r => r.id !== id))} />
+        <ReportList reports={filteredReports} clients={clients} userRole={userRole} onNavigate={(id) => navigate(`/reports/${id}`)} onDeleted={(id) => setReports(prev => prev.filter(r => r.id !== id))} onDuplicated={(id) => navigate(`/reports/${id}/edit`)} />
       </div>
     </div>
   );
