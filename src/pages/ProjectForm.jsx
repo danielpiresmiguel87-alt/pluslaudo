@@ -46,6 +46,18 @@ export default function ProjectForm() {
         .then(p => { setForm({ ...EMPTY, ...p }); setLoading(false); })
         .catch(() => setLoading(false));
     } else {
+      // Projeto novo: número sequencial automático
+      base44.entities.Projeto.list()
+        .then(lista => {
+          const sequencias = (lista || [])
+            .map(p => String(p.numero || '').match(/(\d+)\s*$/))
+            .filter(Boolean)
+            .map(m => parseInt(m[1], 10));
+          const proximo = (sequencias.length ? Math.max(...sequencias) : 0) + 1;
+          const numero = `${new Date().getFullYear()}-${String(proximo).padStart(3, '0')}`;
+          setForm(f => (f.numero ? f : { ...f, numero }));
+        })
+        .catch(() => {});
       // Projeto novo: usa os textos de um laudo já pronto como exemplo
       base44.entities.Report.filter({ workflow_status: 'concluido' }, { sort: '-updated_date', limit: 1 })
         .then(res => {
