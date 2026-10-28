@@ -8,6 +8,9 @@
     "cliente": {
       "type": "string"
     },
+    "cliente_id": {
+      "type": "string"
+    },
     "empresa_emissora": {
       "type": "string"
     },
@@ -22,6 +25,40 @@
     },
     "engenheiro_responsavel": {
       "type": "string"
+    },
+    "engenheiro_id": {
+      "type": "string"
+    },
+    "eletricista_id": {
+      "type": "string"
+    },
+    "instrumento_id": {
+      "type": "string"
+    },
+    "numero_art": {
+      "type": "string"
+    },
+    "art_documento_url": {
+      "type": "string"
+    },
+    "normas": {
+      "type": "string"
+    },
+    "objetivo": {
+      "type": "string"
+    },
+    "metodologia": {
+      "type": "string"
+    },
+    "limitacoes": {
+      "type": "string"
+    },
+    "recomendacoes": {
+      "type": "string"
+    },
+    "limite_ohms": {
+      "type": "number",
+      "default": 10
     },
     "data_inicio": {
       "type": "string",

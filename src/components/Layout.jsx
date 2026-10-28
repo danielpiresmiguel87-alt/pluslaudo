@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
-import { FileText, Briefcase, Users, Gauge, Settings, Menu, LogOut, ShieldCheck } from 'lucide-react';
+import { FileText, Briefcase, Users, Gauge, Settings, Menu, LogOut, ShieldCheck, FolderKanban } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function Layout() {
@@ -23,6 +23,7 @@ export default function Layout() {
   ];
   if (canManage) {
     navItems.push(
+      { to: '/projects', label: 'Projetos', icon: FolderKanban },
       { to: '/clients', label: 'Clientes', icon: Briefcase },
       { to: '/instruments', label: 'Instrumentos', icon: Gauge },
     );

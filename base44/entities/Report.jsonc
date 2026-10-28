@@ -2,6 +2,9 @@
   "name": "Report",
   "type": "object",
   "properties": {
+    "projeto_id": {
+      "type": "string"
+    },
     "equipamento": {
       "type": "string"
     },

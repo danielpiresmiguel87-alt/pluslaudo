@@ -12,6 +12,9 @@ import Home from '@/pages/Home';
 import ReportForm from '@/pages/ReportForm';
 import ReportView from '@/pages/ReportView';
 import Clients from '@/pages/Clients';
+import Projects from '@/pages/Projects';
+import ProjectForm from '@/pages/ProjectForm';
+import ProjectView from '@/pages/ProjectView';
 import Instruments from '@/pages/Instruments';
 import UsersPage from '@/pages/Users';
 import Settings from '@/pages/Settings';
@@ -73,6 +76,10 @@ const AuthenticatedApp = () => {
         <Route path="/reports/new" element={<ErrorBoundary><ReportForm /></ErrorBoundary>} />
         <Route path="/reports/:id/edit" element={<ErrorBoundary><ReportForm /></ErrorBoundary>} />
         <Route path="/reports/:id" element={<ErrorBoundary><ReportView /></ErrorBoundary>} />
+        <Route path="/projects" element={<Projects />} />
+        <Route path="/projects/new" element={<ProjectForm />} />
+        <Route path="/projects/:id" element={<ProjectView />} />
+        <Route path="/projects/:id/edit" element={<ProjectForm />} />
         <Route path="/clients" element={<Clients />} />
         <Route path="/users" element={<UsersPage />} />
         <Route path="/instruments" element={<Instruments />} />

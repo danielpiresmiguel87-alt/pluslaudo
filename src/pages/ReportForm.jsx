@@ -23,6 +23,7 @@ import {
 } from '@/lib/offline';
 import { INSPECTION_ITEMS, getDefaultInspectionStatus } from '@/utils/inspectionItems';
 import { computeWorkflowStatus } from '@/utils/workflow';
+import { applyProjectToReport } from '@/utils/project';
 
 // Serializa as condições climáticas como JSON para que os dados voltem ao reeditar o laudo.
 // O PDF aplica a formatação amigável (formatEnvironmentConditions) no momento da geração.
@@ -51,6 +52,7 @@ export default function ReportForm() {
   const [instruments, setInstruments] = useState([]);
   const [engineers, setEngineers] = useState([]);
   const [electricians, setElectricians] = useState([]);
+  const [projects, setProjects] = useState([]);
   const [form, setForm] = useState({
     equipamento: '', tag_equipamento: '', local: '', data: new Date().toISOString().split('T')[0],
     cliente_id: '', engenheiro_id: '', eletricista_id: '', instrumento_id: '',
@@ -102,6 +104,7 @@ export default function ReportForm() {
     base44.entities.Instrument.list().then(setInstruments).catch(() => setInstruments([]));
     base44.entities.Engineer.list().then(setEngineers).catch(() => setEngineers([]));
     base44.entities.Electrician.list().then(setElectricians).catch(() => setElectricians([]));
+    base44.entities.Projeto.list('-created_date').then(setProjects).catch(() => setProjects([]));
     // User.list() só funciona para admins; isolado para não bloquear os demais dropdowns
     base44.entities.User.list()
       .then(setUsers)
@@ -120,6 +123,16 @@ export default function ReportForm() {
     }
   }, [id, draftKey]);
 
+  // Laudo criado a partir de um projeto: preenche automaticamente os dados comuns
+  useEffect(() => {
+    if (!isNew) return;
+    const projetoId = new URLSearchParams(window.location.search).get('projeto');
+    if (!projetoId) return;
+    base44.entities.Projeto.get(projetoId)
+      .then(p => setForm(f => applyProjectToReport(p, f)))
+      .catch(() => {});
+  }, [isNew]);
+
   // Auto-save rascunho (somente laudos novos; laudos existentes usam o servidor como fonte de verdade)
   useEffect(() => {
     if (!loading && isNew) {
@@ -134,6 +147,13 @@ export default function ReportForm() {
   useBloquearSaida(!saving && (!!form.equipamento || !!form.cliente_id || (form.measurements?.length > 0)));
 
   const set = (field, value) => setForm(f => ({ ...f, [field]: value }));
+
+  // Selecionar um projeto traz os dados comuns (cliente, responsáveis, instrumento, ART e textos)
+  const handleProjectChange = (value) => {
+    if (value === 'none') { set('projeto_id', ''); return; }
+    const projeto = projects.find(p => p.id === value);
+    if (projeto) setForm(f => applyProjectToReport(projeto, f));
+  };
 
   const handleArtUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -314,6 +334,17 @@ export default function ReportForm() {
       <Card>
         <CardHeader><CardTitle>Partes Envolvidas</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="md:col-span-2">
+            <Label>Projeto</Label>
+            <Select value={form.projeto_id || 'none'} onValueChange={handleProjectChange}>
+              <SelectTrigger><SelectValue placeholder="Sem projeto" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Sem projeto</SelectItem>
+                {projects.map(p => <SelectItem key={p.id} value={p.id}>{p.numero}{p.cliente ? ` — ${p.cliente}` : ''}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground mt-1">Ao escolher um projeto, os dados comuns (cliente, responsáveis, instrumento, ART e textos) são preenchidos automaticamente.</p>
+          </div>
           <div>
             <div className="flex items-center justify-between">
               <Label>Cliente</Label>
