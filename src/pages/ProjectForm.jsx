@@ -45,6 +45,22 @@ export default function ProjectForm() {
       base44.entities.Projeto.get(id)
         .then(p => { setForm({ ...EMPTY, ...p }); setLoading(false); })
         .catch(() => setLoading(false));
+    } else {
+      // Projeto novo: usa os textos de um laudo já pronto como exemplo
+      base44.entities.Report.filter({ workflow_status: 'concluido' }, { sort: '-updated_date', limit: 1 })
+        .then(res => {
+          const exemplo = (res.items || res)[0];
+          if (!exemplo) return;
+          setForm(f => ({
+            ...f,
+            normas: f.normas || exemplo.normas || '',
+            objetivo: f.objetivo || exemplo.objetivo || '',
+            metodologia: f.metodologia || exemplo.metodologia || '',
+            limitacoes: f.limitacoes || exemplo.limitacoes || '',
+            recomendacoes: f.recomendacoes || exemplo.recomendacoes || '',
+          }));
+        })
+        .catch(() => {});
     }
   }, [id, isNew]);
 
