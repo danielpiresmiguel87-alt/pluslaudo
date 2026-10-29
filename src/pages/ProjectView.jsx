@@ -36,7 +36,7 @@ export default function ProjectView() {
     <div className="space-y-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/projects')}><ArrowLeft className="h-5 w-5" /></Button>
+          <Button variant="ghost" size="icon" onClick={() => navigate('/')}><ArrowLeft className="h-5 w-5" /></Button>
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <FolderKanban className="h-5 w-5" /> Projeto {project.numero}

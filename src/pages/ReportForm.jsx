@@ -150,7 +150,6 @@ export default function ReportForm() {
 
   // Selecionar um projeto traz os dados comuns (cliente, responsáveis, instrumento, ART e textos)
   const handleProjectChange = (value) => {
-    if (value === 'none') { set('projeto_id', ''); return; }
     const projeto = projects.find(p => p.id === value);
     if (projeto) setForm(f => applyProjectToReport(projeto, f));
   };
@@ -185,6 +184,7 @@ export default function ReportForm() {
   // Salvar como rascunho no servidor e continuar editando
   const handleSaveDraft = async () => {
     if (!garantirConexao()) return;
+    if (!form.projeto_id) { alert('Selecione um projeto para iniciar o laudo.'); return; }
     setSaving(true);
     try {
       const measurements = form.measurements || [];
@@ -230,6 +230,7 @@ export default function ReportForm() {
 
   const handleSave = async (newWorkflowStatus) => {
     if (!garantirConexao()) return;
+    if (!form.projeto_id) { alert('Selecione um projeto para iniciar o laudo.'); return; }
     setSaving(true);
     try {
       // Upload de todas as fotos pendentes (data URL → URL remoto)
@@ -335,15 +336,14 @@ export default function ReportForm() {
         <CardHeader><CardTitle>Partes Envolvidas</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
-            <Label>Projeto</Label>
-            <Select value={form.projeto_id || 'none'} onValueChange={handleProjectChange}>
-              <SelectTrigger><SelectValue placeholder="Sem projeto" /></SelectTrigger>
+            <Label>Projeto *</Label>
+            <Select value={form.projeto_id || ''} onValueChange={handleProjectChange}>
+              <SelectTrigger><SelectValue placeholder="Selecione um projeto" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">Sem projeto</SelectItem>
                 {projects.map(p => <SelectItem key={p.id} value={p.id}>{p.numero}{p.cliente ? ` — ${p.cliente}` : ''}</SelectItem>)}
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground mt-1">Ao escolher um projeto, os dados comuns (cliente, responsáveis, instrumento, ART e textos) são preenchidos automaticamente.</p>
+            <p className="text-xs text-muted-foreground mt-1">Todo laudo pertence a um projeto. Ao escolher o projeto, os dados comuns (cliente, responsáveis, instrumento, ART e textos) são preenchidos automaticamente.</p>
           </div>
           <div>
             <div className="flex items-center justify-between">

@@ -8,7 +8,6 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 // Add page imports here
 import Layout from '@/components/Layout';
-import Home from '@/pages/Home';
 import ReportForm from '@/pages/ReportForm';
 import ReportView from '@/pages/ReportView';
 import Clients from '@/pages/Clients';
@@ -72,11 +71,10 @@ const AuthenticatedApp = () => {
   return (
     <Routes>
       <Route element={<Layout />}>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<Projects />} />
         <Route path="/reports/new" element={<ErrorBoundary><ReportForm /></ErrorBoundary>} />
         <Route path="/reports/:id/edit" element={<ErrorBoundary><ReportForm /></ErrorBoundary>} />
         <Route path="/reports/:id" element={<ErrorBoundary><ReportView /></ErrorBoundary>} />
-        <Route path="/projects" element={<Projects />} />
         <Route path="/projects/new" element={<ProjectForm />} />
         <Route path="/projects/:id" element={<ProjectView />} />
         <Route path="/projects/:id/edit" element={<ProjectForm />} />
