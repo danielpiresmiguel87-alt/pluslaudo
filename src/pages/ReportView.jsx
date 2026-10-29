@@ -9,6 +9,7 @@ import { ArrowLeft, Pencil, Download, Printer, CheckCircle, Upload, FileText, Sa
 import { generateReportPDF } from '@/utils/reportPdf';
 import PdfViewer from '@/components/report/PdfViewer';
 import { formatEnvironmentConditions } from '@/utils/environment';
+import { syncProjectArt } from '@/utils/project';
 
 export default function ReportView() {
   const { id } = useParams();
@@ -52,7 +53,8 @@ export default function ReportView() {
     base44.auth.me().then(setCurrentUser).catch(() => {});
     (async () => {
       try {
-        const r = await base44.entities.Report.get(id);
+        // Laudo vinculado a projeto sem ART própria recebe a ART cadastrada no projeto
+        const r = await syncProjectArt(await base44.entities.Report.get(id));
         setReport(r);
         const [companies, clients, engineers, electricians, instruments, users] = await Promise.all([
           base44.entities.Company.list().catch(() => []),

@@ -23,7 +23,7 @@ import {
 } from '@/lib/offline';
 import { INSPECTION_ITEMS, getDefaultInspectionStatus } from '@/utils/inspectionItems';
 import { computeWorkflowStatus } from '@/utils/workflow';
-import { applyProjectToReport } from '@/utils/project';
+import { applyProjectToReport, syncProjectArt } from '@/utils/project';
 
 // Serializa as condições climáticas como JSON para que os dados voltem ao reeditar o laudo.
 // O PDF aplica a formatação amigável (formatEnvironmentConditions) no momento da geração.
@@ -112,7 +112,7 @@ export default function ReportForm() {
     if (!isNew) {
       // Sempre busca do servidor; descarta rascunho local obsoleto do laudo existente
       limparRascunho(draftKey);
-      base44.entities.Report.get(id).then(r => {
+      base44.entities.Report.get(id).then(syncProjectArt).then(r => {
         setForm({
           objetivo: DEFAULT_OBJECTIVE, metodologia: DEFAULT_METHODOLOGY,
           recomendacoes: DEFAULT_RECOMMENDATIONS, normas: DEFAULT_NORMAS,
